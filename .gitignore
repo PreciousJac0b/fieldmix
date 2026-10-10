@@ -19,3 +19,6 @@ voices/
 .DS_Store
 .vscode/
 .idea/
+
+# Local-only test images (not licensed for the repo)
+web/public/_local/

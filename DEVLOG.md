@@ -35,3 +35,49 @@ That took 11.4 s cold (including model load) and 8.3 s warm. `/api/health` again
 - `think: false`: 1.4 s, 60 output tokens, one clean caption.
 
 This was one run on one image, not a benchmark, but it's a big enough difference to propose `think: false` for the plan and ask calls in Phase 2.
+
+## 2026-10-10 — Phase 1: Color engine (no AI)
+
+**Built** (all in `web/src/color/`, running in the browser):
+- `lab.ts`: sRGB ↔ CIELAB (D65) and CIEDE2000 via culori, plus fast bulk paths (a pixel lookup table, inline XYZ → Lab) that tests check against culori.
+- `kmeans.ts`: k-means++ with a seeded mulberry32 RNG and max 20 iterations. It fits on a 20k-pixel sample, assigns every pixel, and drops empty clusters.
+- `regions.ts`:
+  - pipeline: k-means → greedy merge of the closest pair while ΔE00 < 6 → absorb clusters under 1% into the nearest cluster by color;
+  - output: regions sorted by area with id, hex, Lab, area %, centroid, bbox and a label anchor (the member pixel nearest the centroid);
+  - also a label map, an outline mask and a canvas overlay that draws the region numbers.
+- `swatches.ts`: per-channel median sampling (15 × 15 for swatches, 5 × 5 for the eyedropper) and white balance in linear light so paper ends up at sRGB 245.
+- `mix.ts`: `mixPaints` is the thin wrapper over `spectral.mix`. `MixKernel` is the fast path for the search.
+- `paints.ts`: the preset paints and the three eval palettes.
+- `recipes.ts` + `recipes.worker.ts` + `solver.ts`: the brute-force search, run in a Web Worker.
+- `adjust.ts`: eyedropper, rule-based tips, and the test-dab re-solve.
+- `web/dev.html`: the debug page. `scripts/eval.ts` is the color half of the eval (macOS `sips` decodes the images; Node 24 runs it as TypeScript directly).
+
+**Reading the real spectral.js 3.0 API.** It's a UMD bundle, `mix([Color, factor], …)` takes `Color` objects, and factors are normalized. Each pigment's effective concentration is **factor² × tintingStrength² × luminance**, so "2 parts" weighs 4× before the luminance term. I kept the library's model as is and treated recipe parts as its factors, which is how the README uses whole numbers. This is a modeling assumption worth stating in the post.
+
+**The search-speed problem and the fix.** A region search over 3 of 12 paints with parts 1–6 plus white and black is about 740k mixes. At about 2 µs per `spectral.mix` call (each builds a `Color` object), that's around 1.5 s *per region*. Two changes fixed it:
+1. Mix results don't depend on the target, so every candidate is mixed **once per palette** and all regions are matched against that list. A CIE76 prefilter keeps the 48 nearest, then CIEDE2000 ranks them.
+2. `MixKernel` recomputes spectral.js's formula using spectral.js's own per-paint K/S curves and luminance, plus its 3 × 38 color-matching matrix, read from the library by feeding it unit reflectance curves. A parity test checks 500 random recipes against `spectral.mix` to 1e-9 in Lab.
+
+Equivalent ratios are removed with a GCD check (2:2 = 1:1). Palettes with more than 12 colored paints switch to a per-region search over the paints whose hues bracket the target, plus the nearest few.
+
+**What broke.** 3 of the first 68 tests failed, and each was my expectation, not the code:
+- I hand-computed a white-balance value wrong (sRGB 100 under a 1.581 linear gain is 124, not 126).
+- I assumed Alizarin was the darkest preset; Phthalo Blue is darker.
+- "Too dark" on pure Ultramarine suggested Cadmium Red instead of White. This one exposed a real weakness: scoring by plain ΔE to a shifted goal treats a hue change the same as overshooting lightness. I replaced it with a weighted score:
+  - missing the requested amount: ×0.5 (the painter can add a bit less);
+  - drifting on the other lightness/chroma axis: ×1;
+  - hue drift: ×2.
+  A new test checks that "too dark" on a blue tint now suggests white.
+
+**Results.**
+- 69/69 Vitest tests pass, and the typecheck is clean.
+- All 13 Sharma CIEDE2000 pairs are within 0.0001, including the hue-wraparound pairs.
+- Synthetic 4-color image at k = 6 → 4 regions, each within ΔE00 2 of its source.
+- Blue + yellow lands at hue 139.9° (spectral.js README colors), and stays between 90° and 180° for the preset Ultramarine + Cadmium Yellow Light Hue at 1:1, 1:2 and 2:1.
+- Every feedback button has a test that checks the direction of the change, plus a test for the "no single-part fix" case.
+- Speed in Chrome (Web Worker, unthrottled):
+  - eval palettes: 1–3 ms once cached;
+  - all 19 presets: 233 ms for 6 regions and 349 ms for 9.
+  - In Node, 10 regions × 12 paints takes under 750 ms by test.
+  - I couldn't apply Chrome's 4× CPU throttle from this environment, so the throttled figure (about 1.4 s worst case) is an estimate, not a measurement.
+- **Provisional** fixture check, on three macOS built-in landscape wallpapers (stand-ins until the real fixture photos arrive, so not quotable): student palette 94% of regions under ΔE 10 (17/18, median 1.20); primaries + white + black 100% (median 1.73); minimal 4-paint set 89% (median 3.30). The misses are dark neutrals (asphalt, shadow) with no black in the palette.

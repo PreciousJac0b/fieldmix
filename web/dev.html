@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fieldmix color debug</title>
+    <style>
+      body { font: 16px/1.4 system-ui, sans-serif; margin: 0; padding: 16px; background: #fff; color: #000; }
+      header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+      #stage { position: relative; display: inline-block; max-width: 100%; }
+      #stage canvas { max-width: 100%; height: auto; display: block; }
+      #overlay { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+      table { border-collapse: collapse; margin-top: 12px; width: 100%; max-width: 900px; }
+      th, td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: middle; }
+      .chip { display: inline-block; width: 40px; height: 28px; border: 1px solid #0003; border-radius: 4px; vertical-align: middle; }
+      .bad { color: #b00020; font-weight: 600; }
+      #status { font-family: ui-monospace, monospace; font-size: 14px; }
+      #eyedrop { margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Fieldmix color debug</strong>
+      <input id="file" type="file" accept="image/*" />
+      <label>Palette <select id="palette"></select></label>
+      <label>k <input id="k" type="range" min="4" max="10" value="6" /> <span id="kval">6</span></label>
+      <span id="status">Choose a photo.</span>
+    </header>
+    <div id="stage"><canvas id="photo"></canvas><canvas id="overlay"></canvas></div>
+    <div id="eyedrop"></div>
+    <table id="regions"></table>
+    <script type="module" src="/src/dev.ts"></script>
+  </body>
+</html>
