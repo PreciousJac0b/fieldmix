@@ -17,7 +17,21 @@ All fixes are recorded in the spec changelog.
 - `scripts/dev.sh` (backend on :8000, Vite on :5173, prints the phone URL), `scripts/pull_model.sh`, `scripts/smoke_test.py`.
 
 **What broke / notes.**
-- Ollama was not installed, so `model_ready` is false and the smoke test is pending.
+- Ollama wasn't installed. The user installed Ollama 0.40.2 with Homebrew and started it as a service.
+- The first `ollama pull gemma4:e4b` stalled at 26% (2.5 of 9.5 GB) with a network drop. My output filter hid the non-zero exit code. A re-run resumed from the partial download and finished.
 - Starlette warns that using `httpx` with its TestClient is deprecated in favor of `httpx2`. Left as is for now (switching would be a new dependency).
 - culori ships no TypeScript types. Plan: a small local `.d.ts` for the functions we use, rather than adding `@types/culori`.
 - TypeScript itself is Apache-2.0, not MIT as the stack table implies for the frontend. It's a dev-only tool, so the repo license is unaffected.
+
+**Model (confirmed with `ollama list` / `ollama show`).** `gemma4:e4b`, 9.5 GB, 8.1B parameters, nvfp4 quantization, 128K context, Apache 2.0. Capabilities: vision, audio, tools, thinking (on by default). Defaults: temperature 1, top_k 64, top_p 0.95.
+
+**Smoke test.** For a stand-in landscape (macOS's built-in "Big Sur Coastline" wallpaper at 768 px, used locally and not committed), the caption was:
+> A turbulent canvas of maritime blues and craggy neutrals is softened by a blush of intense crimson along the coastal slope, where sun-bleached rock meets the sea's milky tranquility.
+
+That took 11.4 s cold (including model load) and 8.3 s warm. `/api/health` against the live Ollama returns `model_ready: true`.
+
+**Finding: thinking mode.** Same image and prompt, temperature 0.3, one run each:
+- `think: true` (the default): 8.2 s, 720 output tokens. It also returned three "Option" captions instead of the one asked for.
+- `think: false`: 1.4 s, 60 output tokens, one clean caption.
+
+This was one run on one image, not a benchmark, but it's a big enough difference to propose `think: false` for the plan and ask calls in Phase 2.
