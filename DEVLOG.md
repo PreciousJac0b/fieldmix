@@ -308,3 +308,13 @@ Tests: web 87/87, server 92/92.
   So it's labeled a starting point.
 - **Bug found by the live run:** the rule-based fallback never found the background, because the test image has a frame line and the gap-closing padding keeps every shape off the true edge. "Touches the edge" now allows a margin of max(closeRadius + 4, 3% of the short side); there's a test with a framed drawing.
 - **Tests:** server 101 (+8 suggest: validation, normalization, prompt, retry → fallback, transport error, endpoint; + schema templating); web 126 (+5: numbering, neighbors, rules, framed background, no white).
+
+### 2026-10-11 — Text overflowing the paint tiles in "Color it in" (user report)
+
+- **Bug (reported from the phone):** paint names spilled out of their tiles. With a 44 px swatch beside the name in a two-column grid, a 375 px phone left about 70 px for text, so "Quinacridone" overflowed and "Ultramarine" touched the border.
+- **Fixes:**
+  - paint tiles: the swatch is a full-width bar on top and the name gets the whole tile width; the selected tile's swatch gets a white border so dark paints stay visible on the black selected background;
+  - segmented rows (Add white, Fill / Draw outline, Close gaps, Photo / Both / Painting): one equal column per button. They used to size to the longest word and push past the screen edge at 300 px, and the two-button tool row sat in a three-column grid. Text is 16 px below 340 px wide;
+  - suggestion card and Your colors: number, swatch and name on one line, the reason or recipe below at full width (they were squeezed into a narrow third column);
+  - the Before / after slider lost its default 2 px side margins, which made it 4 px wider than the screen.
+- **Checked** in the browser at 300, 375 and 412 px wide: no element wider than its box and no sideways page scroll.

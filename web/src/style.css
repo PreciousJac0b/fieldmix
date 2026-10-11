@@ -37,15 +37,20 @@ button:disabled { opacity: 0.5; }
 button.full { width: 100%; }
 button.big { min-height: 64px; font-size: 22px; }
 
-.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+/* Segmented rows: one equal column per button, never wider than the screen. */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.seg button { padding: 10px 6px; line-height: 1.2; overflow-wrap: anywhere; }
 .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
 .choices button[aria-pressed='true'], .choices button[aria-selected='true'], .choices button[aria-checked='true'], .seg button[aria-checked='true'] { background: var(--text); color: var(--bg); }
-.paint-pick { display: flex; align-items: center; gap: 8px; text-align: left; font-weight: 600; font-size: 16px; }
+/* Paint tiles: swatch bar on top so the name gets the tile's full width (long names like Quinacridone Magenta). */
+.paint-pick { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px; min-width: 0; text-align: left; font-weight: 600; font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; hyphens: auto; }
+.paint-pick .chip { width: 100%; height: 28px; }
+.paint-pick[aria-checked='true'] .chip { border-color: var(--bg); }
 
 input[type='text'], input[type='url'], select, textarea {
   font: inherit; width: 100%; min-height: 52px; padding: 10px; border: 3px solid var(--line); border-radius: 10px; background: #fff; color: #000;
 }
-input[type='range'] { width: 100%; height: 44px; }
+input[type='range'] { width: 100%; height: 44px; margin: 0; }
 label.check { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 4px; border-bottom: 1px solid #ccc; }
 label.check input { width: 28px; height: 28px; }
 
@@ -59,6 +64,12 @@ label.check input { width: 28px; height: 28px; }
 .q-closest { color: var(--bad); }
 .num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: #000; color: #fff; font-weight: 800; }
 .dotrow { display: grid; grid-template-columns: auto auto 1fr; gap: 10px; align-items: center; margin: 4px 0; }
+/* A color in a list (Color it in): swatch and name on one line, details below at full width. */
+.colorrow { margin: 12px 0; }
+.colorrow .head { display: flex; align-items: center; gap: 10px; }
+.colorrow .head .num { flex: none; }
+.colorrow .head strong { min-width: 0; line-height: 1.25; overflow-wrap: anywhere; }
+.colorrow p { margin: 4px 0 0; }
 .dots { font-size: 16px; letter-spacing: 1px; white-space: nowrap; }
 .starting { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 
@@ -83,4 +94,5 @@ label.check input { width: 28px; height: 28px; }
 .dab button.wide { grid-column: span 2; }
 .answer { font-size: 22px; background: #fffbe6; }
 
+@media (max-width: 340px) { .seg button { font-size: 16px; padding-inline: 4px; } }
 @media (min-width: 700px) { .dab { grid-template-columns: repeat(5, 1fr); } .dab button.wide { grid-column: auto; } }

@@ -136,6 +136,16 @@ function colorName(s: Session, c: ColorChoice): string {
   return w === 0 ? base : w === 1 ? `${base}, lighter` : `${base}, pale`
 }
 
+/** One color in a list: number, swatch and name on the first line, the detail below at full width. */
+function colorRow(hex: string, name: string, detail: string, number?: number): HTMLElement {
+  return h(
+    'div',
+    { class: 'colorrow' },
+    h('div', { class: 'head' }, number === undefined ? null : h('span', { class: 'num' }, String(number)), chip(hex), h('strong', {}, name)),
+    h('p', { class: 'muted' }, detail),
+  )
+}
+
 /** Replace the session's regions and recipes with the colored-in shapes. */
 export function applyColoring(s: Session): void {
   const st = s.coloring!
@@ -195,7 +205,7 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
         h('p', { class: 'muted' }, sug.source === 'gemma' ? 'A starting point: tap any shape to change its color, or Undo to remove the whole suggestion.' : 'Rules only: neighboring shapes get different paints and the background is pale. It can\'t tell a face from a cap, so change anything you like.'),
         ...sug.items.map((it) => {
           const c = st.choices.get(it.key)!
-          return h('div', { class: 'dotrow' }, h('span', { class: 'num' }, String(it.number)), chip(c.hex), h('span', {}, h('strong', {}, colorName(s, c)), ' — ', it.reason))
+          return colorRow(c.hex, colorName(s, c), it.reason, it.number)
         }),
       ),
     )
@@ -273,13 +283,7 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
       ...(counts.size ? [] : [h('p', { class: 'muted' }, 'Nothing colored yet.')]),
       ...[...counts].map(([key, nShapes]) => {
         const choice = st.choices.get(key)!
-        return h(
-          'div',
-          { class: 'dotrow' },
-          chip(choice.hex),
-          h('span', { class: 'muted' }, `${nShapes} shape${nShapes > 1 ? 's' : ''}`),
-          h('span', {}, h('strong', {}, colorName(s, choice)), ' — ', recipeText(s.palette, choice.parts)),
-        )
+        return colorRow(choice.hex, colorName(s, choice), `${nShapes} shape${nShapes > 1 ? 's' : ''}: ${recipeText(s.palette, choice.parts)}`)
       }),
     )
     toolHint.textContent =
