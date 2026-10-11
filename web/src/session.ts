@@ -26,10 +26,14 @@ export interface Photo {
 
 /** "Color it in" state for outline drawings. */
 export interface ColoringState {
-  /** Shape id → chosen color key. */
-  fills: Map<number, string>
+  /** Taps in image px with the chosen color key; later taps win. Stored by position so they survive shape changes. */
+  fills: { x: number; y: number; key: string }[]
+  /** Painter-drawn outlines, each a flat [x0, y0, x1, y1, …] list in image px. */
+  strokes: number[][]
   choices: Map<string, ColorChoice>
-  history: { shape: number; prev?: string }[]
+  /** What Undo removes next. */
+  history: ('fill' | 'stroke')[]
+  tool: 'fill' | 'outline'
   paintId: string
   /** Parts of white per part of paint: 0 (as is), 1 (lighter), 3 (pale). */
   lighten: 0 | 1 | 3

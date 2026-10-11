@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildColoringModel, regionsFromColoring, renderColoring, shapeAt, type ColorChoice } from '../src/color/coloring.ts'
+import { buildColoringModel, rasterizeStrokes, regionsFromColoring, renderColoring, resolveFills, shapeAt, withOutlines, type ColorChoice } from '../src/color/coloring.ts'
 import { makeImage } from './helpers.ts'
 
 const WHITE: [number, number, number] = [250, 250, 250]
@@ -87,5 +87,50 @@ describe('regionsFromColoring', () => {
     expect(labelMap[20 * 60 + 55]).toBe(1)
     expect(labelMap[20 * 60 + 10]).toBe(255) // the outline is not a region
     for (const r of regions) expect(labelMap[r.label_point[1] * 60 + r.label_point[0]]).toBe(r.id - 1)
+  })
+})
+
+describe('painter-drawn outlines', () => {
+  // An open page: one curly stroke that encloses nothing, like a loose curl of hair.
+  const page = () => makeImage(80, 40, (x, y) => (Math.abs(y - 20 - 6 * Math.sin(x / 5)) < 1 && x > 20 && x < 60 ? BLACK : WHITE))
+
+  it('rasterizes a stroke as a solid line, including between sampled points', () => {
+    const mask = rasterizeStrokes([[10, 5, 10, 35]], 80, 40, 1)
+    for (let y = 5; y <= 35; y++) expect(mask[y * 80 + 10]).toBe(1)
+    expect(mask[20 * 80 + 13]).toBe(0)
+  })
+
+  it('a drawn outline splits an open area into two shapes', () => {
+    const base = buildColoringModel(page(), 60, 1)
+    expect(shapeAt(base, 5, 5)).toBe(shapeAt(base, 75, 5)) // the curl encloses nothing
+    const split = withOutlines(base, [[40, 0, 40, 39]])
+    expect(shapeAt(split, 5, 5)).not.toBe(shapeAt(split, 75, 5))
+    expect(split.user[20 * 80 + 40]).toBe(1)
+    expect(base.user.every((v) => v === 0)).toBe(true) // the base model is not modified
+  })
+
+  it('fills are kept by tap position, so they survive a new outline', () => {
+    const base = buildColoringModel(page(), 60, 1)
+    const taps = [{ x: 5, y: 5, key: 'red' }]
+    expect([...resolveFills(base, taps).values()]).toEqual(['red'])
+    const split = withOutlines(base, [[40, 0, 40, 39]])
+    const fills = resolveFills(split, taps)
+    expect(fills.get(shapeAt(split, 5, 5))).toBe('red')
+    expect(fills.has(shapeAt(split, 75, 5))).toBe(false) // the other side is no longer red
+  })
+
+  it('a later tap on the same shape wins', () => {
+    const base = buildColoringModel(page(), 60, 1)
+    const fills = resolveFills(base, [
+      { x: 5, y: 5, key: 'red' },
+      { x: 70, y: 30, key: 'blue' },
+    ])
+    expect([...fills.values()]).toEqual(['blue'])
+  })
+
+  it('renders the painter’s outline in its own color', () => {
+    const m = withOutlines(buildColoringModel(page(), 60, 1), [[40, 0, 40, 39]])
+    const out = renderColoring(m, new Map(), [30, 30, 30], [250, 250, 250], [30, 90, 200])
+    expect(Array.from(out.slice((5 * 80 + 40) * 4, (5 * 80 + 40) * 4 + 3))).toEqual([30, 90, 200])
   })
 })

@@ -258,3 +258,26 @@ Tests: web 87/87, server 92/92.
   | Regions under ΔE 10 | 16/17 | 16/17 |
 
   The coastline sea is now 2 Phthalo + 2 White + 1 Alizarin (ΔE 1.9). An uncapped first version dropped one region from "OK" to "Closest possible", which is why the cap was added.
+
+### 2026-10-11 — Outlines around objects in "Color it in" (user request)
+
+- **Report:** tapping the hair on the coloring page also filled the background (and the area under the neck).
+- **First attempt: automatic object outlines** (not shipped). A morphological closing of the strokes (built on a chamfer distance transform) was meant to merge dense strokes like curly hair into one object and draw its edge as a boundary. Debug maps of the user's drawing, with random colors per shape and the new outlines in red, showed it fails here:
+  - at radius 12 the outlines chopped the upper background into many small pieces;
+  - the hair was *still* joined to the neck and lower background, because the curls are more than 24 px apart, so no radius sees "hair" without also breaking up everything else.
+  The change was reverted.
+- **Shipped: painter-drawn outlines.**
+  - A **Fill / Draw outline** tool switch. In Draw outline the canvas takes the finger (`touch-action: none`) and the stroke is previewed live.
+  - On release, the stroke is rasterized as a solid line (`rasterizeStrokes`) and added to the walls (`withOutlines`), and the shapes are re-found.
+  - The painter's outlines render in blue, so they read as "yours". The UI suggests sketching them on the canvas in pencil.
+  - One Undo for both fills and outlines; Clear all.
+- **Fills are now stored by tap position** (`resolveFills`), not by shape number, so they survive new outlines and changes to the gap setting. The gap control no longer wipes your work. Later taps on the same shape win.
+- **Also:** removed the duplicate "outline drawing" note in the Color it in tab (the note above the tabs already says it), so the drawing sits higher on a phone.
+- **Tests (+5, web now 121/121):** stroke rasterization covers the gaps between sampled points; a drawn outline splits an open area; the base model is untouched; fills survive a new outline; later taps win; outlines render in their own color.
+- **Checked in Chrome at phone size, on the user's drawing:**
+  - without an outline, filling the hair also filled the area under the neck;
+  - after dragging a blue outline down from the neck, the same tap filled only the hair;
+  - the first Undo removed the fill, the second the outline;
+  - cap, face, hair and background colored together look right;
+  - "Paint with these colors" with the backend off gave the offline plan ("1 part Cadmium Red Hue" for the cap);
+  - no new console errors.

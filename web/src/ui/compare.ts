@@ -42,22 +42,10 @@ function caption(ctx: CanvasRenderingContext2D, text: string, x: number, align: 
 }
 
 export function renderCompare(s: Session, onPlan: () => Promise<void>): HTMLElement {
-  // Outline drawings have no colors to preview, so offer coloring them in instead.
-  if (s.coloring || isLineArt(s.regions!.regions)) {
-    return h(
-      'div',
-      {},
-      s.coloring?.fills.size
-        ? ''
-        : h(
-            'div',
-            { class: 'card', role: 'note' },
-            h('strong', {}, 'This is an outline drawing, so there are no colors to preview yet.'),
-            h('p', {}, 'Color it in below with your own paints, or photograph the host\'s finished sample painting instead.'),
-          ),
-      renderColorIn(s, onPlan),
-    )
-  }
+  // Outline drawings have no colors to preview, so offer coloring them in instead
+  // (the color map's note above the tabs already explains why).
+  if (s.coloring || isLineArt(s.regions!.regions)) return renderColorIn(s, onPlan)
+
   const photo = s.photo!.canvas
   const { canvas: after, overallDeltaE } = previewCanvas(s)
   const view = h('canvas', { width: photo.width, height: photo.height, 'aria-label': 'Photo on the left, preview of your painting on the right' })

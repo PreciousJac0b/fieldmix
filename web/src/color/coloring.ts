@@ -19,7 +19,9 @@ export interface ColoringModel {
   closeRadius: number
   /** 1 where the photo has an outline pixel. */
   line: Uint8Array
-  /** 1 where the thickened outline is (line plus a closeRadius margin). */
+  /** 1 where the painter drew an outline of their own (e.g. around curly hair). */
+  user: Uint8Array
+  /** 1 where fills stop: the thickened outline plus the painter's outlines. */
   wall: Uint8Array
   /** Shape id per pixel, -1 on walls. */
   shape: Int32Array
@@ -53,6 +55,13 @@ export function buildColoringModel(img: PixelImage, lineL = LINE_L, closeRadius 
     }
   }
 
+  const { shape, shapeCount } = labelShapes(wall, width, height)
+  return { width, height, closeRadius, line, user: new Uint8Array(n), wall, shape, shapeCount }
+}
+
+/** 4-connected areas of non-wall pixels (a 4-connected fill can't cross an 8-connected wall). */
+function labelShapes(wall: Uint8Array, width: number, height: number): { shape: Int32Array; shapeCount: number } {
+  const n = width * height
   const shape = new Int32Array(n).fill(-1)
   let shapeCount = 0
   const stack = new Int32Array(n)
@@ -73,7 +82,54 @@ export function buildColoringModel(img: PixelImage, lineL = LINE_L, closeRadius 
     }
     shapeCount++
   }
-  return { width, height, closeRadius, line, wall, shape, shapeCount }
+  return { shape, shapeCount }
+}
+
+/**
+ * Rasterize painter-drawn strokes (each a flat [x0, y0, x1, y1, …] list in image px)
+ * as solid lines `radius` px either side of the path.
+ */
+export function rasterizeStrokes(strokes: number[][], width: number, height: number, radius = 1): Uint8Array {
+  const mask = new Uint8Array(width * height)
+  const stamp = (cx: number, cy: number) => {
+    const x0 = Math.round(cx)
+    const y0 = Math.round(cy)
+    for (let y = Math.max(0, y0 - radius); y <= Math.min(height - 1, y0 + radius); y++) {
+      for (let x = Math.max(0, x0 - radius); x <= Math.min(width - 1, x0 + radius); x++) mask[y * width + x] = 1
+    }
+  }
+  for (const pts of strokes) {
+    if (pts.length >= 2) stamp(pts[0], pts[1])
+    for (let k = 2; k + 1 < pts.length; k += 2) {
+      const [ax, ay, bx, by] = [pts[k - 2], pts[k - 1], pts[k], pts[k + 1]]
+      const steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) * 2))
+      for (let t = 1; t <= steps; t++) stamp(ax + ((bx - ax) * t) / steps, ay + ((by - ay) * t) / steps)
+    }
+  }
+  return mask
+}
+
+/** The base model plus the painter's own outlines: shapes are re-found with those as walls. */
+export function withOutlines(base: ColoringModel, strokes: number[][]): ColoringModel {
+  if (!strokes.length) return base
+  const user = rasterizeStrokes(strokes, base.width, base.height)
+  const wall = new Uint8Array(base.wall)
+  for (let i = 0; i < wall.length; i++) if (user[i]) wall[i] = 1
+  const { shape, shapeCount } = labelShapes(wall, base.width, base.height)
+  return { ...base, user, wall, shape, shapeCount }
+}
+
+/**
+ * Fills are stored by where the painter tapped, so they survive shapes changing
+ * (a new outline, a different gap setting). Later taps win over earlier ones.
+ */
+export function resolveFills(m: ColoringModel, taps: { x: number; y: number; key: string }[]): Map<number, string> {
+  const fills = new Map<number, string>()
+  for (const t of taps) {
+    const shape = shapeAt(m, t.x, t.y)
+    if (shape >= 0) fills.set(shape, t.key)
+  }
+  return fills
 }
 
 /** The shape under (x, y); a tap on a line snaps to the nearest shape within `snap` px. -1 if none. */
@@ -99,16 +155,17 @@ export function shapeAt(m: ColoringModel, x: number, y: number, snap = 6): numbe
 type Rgb = [number, number, number]
 
 /**
- * Render the colored-in drawing. Outline pixels get `lineRgb`, filled shapes their
- * color, unfilled shapes `paperRgb`. The thin margin added around lines takes the color
+ * Render the colored-in drawing. Outline pixels get `lineRgb`, the painter's own
+ * outlines `userRgb`, filled shapes their color, unfilled shapes `paperRgb`. The thin margin added around lines takes the color
  * of a neighboring filled shape, so fills reach the lines without a white halo.
  */
-export function renderColoring(m: ColoringModel, fills: Map<number, Rgb>, lineRgb: Rgb, paperRgb: Rgb): Uint8ClampedArray<ArrayBuffer> {
-  const { width, height, line, wall, shape } = m
+export function renderColoring(m: ColoringModel, fills: Map<number, Rgb>, lineRgb: Rgb, paperRgb: Rgb, userRgb: Rgb = lineRgb): Uint8ClampedArray<ArrayBuffer> {
+  const { width, height, line, user, wall, shape } = m
   const out = new Uint8ClampedArray(width * height * 4)
   for (let i = 0; i < width * height; i++) {
     let c: Rgb = paperRgb
     if (line[i]) c = lineRgb
+    else if (user[i]) c = userRgb
     else if (!wall[i]) c = fills.get(shape[i]) ?? paperRgb
     else {
       const x = i % width
