@@ -81,3 +81,38 @@ Equivalent ratios are removed with a GCD check (2:2 = 1:1). Palettes with more t
   - In Node, 10 regions × 12 paints takes under 750 ms by test.
   - I couldn't apply Chrome's 4× CPU throttle from this environment, so the throttled figure (about 1.4 s worst case) is an estimate, not a measurement.
 - **Provisional** fixture check, on three macOS built-in landscape wallpapers (stand-ins until the real fixture photos arrive, so not quotable): student palette 94% of regions under ΔE 10 (17/18, median 1.20); primaries + white + black 100% (median 1.73); minimal 4-paint set 89% (median 3.30). The misses are dark neutrals (asphalt, shadow) with no black in the palette.
+
+## 2026-10-11 — Phase 2: Gemma planner backend
+
+**Built** (`server/app/`):
+- `schemas.py`: pydantic models matching the API contract, plus `PlanOutput` (labels + steps only), whose JSON schema is what the model gets. `source` is added by the server.
+- `providers/base.py`: the `Provider` interface (`plan`, `ask`) with the shared flow: build the prompt → call → parse → validate → on failure retry once with the problems appended → else fallback. Concrete providers only implement `chat()`.
+- `providers/ollama.py`: `/api/chat`, temperature 0.3, 120 s timeout, `think: false`.
+- `validate.py` and `paint_names.py`: every region_id exists; every region is painted in at least one step; no ratio or amount phrases ("2 parts", "2:1", "equal parts", "30%", "half and half"); no paint names from a list of about 45 common ones unless they're in the palette (mentions like "cadmium yellow" are fine when the palette has "Cadmium Yellow Light Hue").
+- `fallback.py`: deterministic planner.
+  - Opaque media go top to bottom in four bands, darks first within a band; watercolor goes light to dark.
+  - Labels come from color and position.
+  - One step per region plus a details step; minutes are split by area with integer arithmetic only, so the TS port can match exactly.
+  - `fixtures/planner_parity.json` (7 cases) is the shared reference.
+- `prompts/plan.md` and `prompts/ask.md` contain every rule the spec requires. The model gets each region's hex, lightness, area and position, and which paints its recipe uses, **but never the amounts**, so it has nothing to repeat.
+- `/api/ask`: under 80 words (trimmed at a sentence boundary), photo optional, ratio check, retry once, then a safe canned answer.
+- `calllog.py`: one JSON line per call (provider, model, latency_ms, attempts, fallback, structured_output, and the problems plus raw replies on failure).
+- `scripts/make_plan_request.ts` builds real `/api/plan` bodies from a photo using the TS color engine. `scripts/eval.py` is the model half of the eval.
+
+**What broke, and the fixes.**
+1. **Ollama's structured output isn't available here.** Every call came back HTTP 501 `{"error":"structured output is unavailable"}`, even for `format: "json"`. Ollama's log showed why: this model runs on the MLX engine, and Homebrew's Ollama 0.40.2 bottle doesn't include `libollama_xgrammar.dylib`. The spec assumed `format` works. Fix: when Ollama reports this, the provider resends without `format`, with the JSON shape in the prompt, and remembers that for the session. Validation, retry and fallback still guard the output. The official Ollama app may include xgrammar (not checked).
+2. **Unconstrained JSON slips.** In two of the early runs, both attempts failed:
+   - one reply had an extra `}` at the end;
+   - one closed the object right after `labels` (`…}]}, "steps": [ … ]}`). Logging the raw reply showed the retry returned the *identical* 1,988 characters, so retrying doesn't help with this kind of error at temperature 0.3.
+   The parser now takes the first complete JSON object and repairs that one specific shape, and only when strict parsing fails. Validation is unchanged.
+3. Mocked tests passed first time. The real problems only appeared against the live model, which is why the live run is part of the phase.
+
+**Results.**
+- pytest: 91 passed (validation, fallback across 4 mediums × 1–10 regions, parity fixture, retry/fallback/transport-error flow, fenced, trailing and prematurely closed JSON, endpoints, and the exact Ollama request body including the prompted-JSON path).
+- Live run with `gemma4:e4b` on three **stand-in** scenes (macOS wallpapers "Big Sur Mountains" for park, "Big Sur Coastline" for beach and "Big Sur Road" for street, since the fixture photos aren't in yet), acrylic and watercolor, 3 runs each, so 18 plans:
+  - first full run: 17/18 valid, p50 6.2 s, p95 12.9 s (one stray-brace failure, then fixed);
+  - second run: 17/18, p50 6.0 s, p95 13.2 s (one premature-close failure, then fixed);
+  - final run, after both repairs: **18/18 valid on the first try, 0 fallbacks, median 6.2 s, p95 7.5 s.**
+  - **Thinking on, for comparison** (6 plans): all valid, median **17.9 s**, p95 19.7 s. With thinking off the plans are just as valid and about 3× faster, so `think: false` stays.
+- `/api/ask` live: 1.4–1.6 s and about 30 words. "How much white should I add?" got no amount. With a photo attached, it gave one concrete suggestion.
+- These figures are on stand-in photos with small samples. The numbers the post may quote come from `scripts/eval.py` on the real fixtures (Phase 6).

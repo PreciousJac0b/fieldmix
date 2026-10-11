@@ -1,0 +1,2265 @@
+[
+ {
+  "name": "acrylic_6_60",
+  "request": {
+   "image_b64": "",
+   "mode": "scene",
+   "medium": "acrylic",
+   "minutes": 60,
+   "palette": [
+    {
+     "id": "titanium-white",
+     "name": "Titanium White",
+     "hex": "#f4f3ee"
+    },
+    {
+     "id": "ultramarine",
+     "name": "Ultramarine Blue",
+     "hex": "#243b8f"
+    },
+    {
+     "id": "cad-yellow-light",
+     "name": "Cadmium Yellow Light Hue",
+     "hex": "#f9d71c"
+    },
+    {
+     "id": "burnt-sienna",
+     "name": "Burnt Sienna",
+     "hex": "#8a3b22"
+    }
+   ],
+   "regions": [
+    {
+     "id": 1,
+     "hex": "#9cc3e6",
+     "lab": [
+      77.0,
+      -6.0,
+      -22.0
+     ],
+     "area_pct": 30.0,
+     "centroid": [
+      256.0,
+      60.0
+     ],
+     "bbox": [
+      0.0,
+      0.0,
+      512.0,
+      130.0
+     ]
+    },
+    {
+     "id": 2,
+     "hex": "#5f7f9c",
+     "lab": [
+      52.0,
+      -4.0,
+      -18.0
+     ],
+     "area_pct": 12.0,
+     "centroid": [
+      300.0,
+      150.0
+     ],
+     "bbox": [
+      0.0,
+      120.0,
+      512.0,
+      60.0
+     ]
+    },
+    {
+     "id": 3,
+     "hex": "#3e5f2c",
+     "lab": [
+      37.0,
+      -20.0,
+      25.0
+     ],
+     "area_pct": 22.0,
+     "centroid": [
+      150.0,
+      230.0
+     ],
+     "bbox": [
+      0.0,
+      170.0,
+      300.0,
+      120.0
+     ]
+    },
+    {
+     "id": 4,
+     "hex": "#7da24a",
+     "lab": [
+      62.0,
+      -25.0,
+      40.0
+     ],
+     "area_pct": 18.0,
+     "centroid": [
+      380.0,
+      300.0
+     ],
+     "bbox": [
+      250.0,
+      230.0,
+      262.0,
+      154.0
+     ]
+    },
+    {
+     "id": 5,
+     "hex": "#c9b38a",
+     "lab": [
+      73.0,
+      3.0,
+      22.0
+     ],
+     "area_pct": 10.0,
+     "centroid": [
+      260.0,
+      340.0
+     ],
+     "bbox": [
+      180.0,
+      300.0,
+      160.0,
+      84.0
+     ]
+    },
+    {
+     "id": 6,
+     "hex": "#2a2a24",
+     "lab": [
+      17.0,
+      -1.0,
+      4.0
+     ],
+     "area_pct": 8.0,
+     "centroid": [
+      90.0,
+      330.0
+     ],
+     "bbox": [
+      0.0,
+      280.0,
+      180.0,
+      104.0
+     ]
+    }
+   ],
+   "recipes": [
+    {
+     "region_id": 1,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#9cc3e6",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 2,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#5f7f9c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 3,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#3e5f2c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 4,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#7da24a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 5,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#c9b38a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 6,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#2a2a24",
+     "delta_e": 3.2
+    }
+   ]
+  },
+  "expected": {
+   "labels": [
+    {
+     "region_id": 1,
+     "label": "pale sky"
+    },
+    {
+     "region_id": 2,
+     "label": "sky"
+    },
+    {
+     "region_id": 3,
+     "label": "dark foliage"
+    },
+    {
+     "region_id": 4,
+     "label": "foliage"
+    },
+    {
+     "region_id": 5,
+     "label": "light ground"
+    },
+    {
+     "region_id": 6,
+     "label": "deep shadows"
+    }
+   ],
+   "steps": [
+    {
+     "order": 1,
+     "region_ids": [
+      1
+     ],
+     "title": "Pale sky (region 1)",
+     "instruction": "Mix the pale sky color shown below. Block in region 1 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Acrylic dries fast, so mix enough for the whole shape before you start.",
+     "est_minutes": 16
+    },
+    {
+     "order": 2,
+     "region_ids": [
+      2
+     ],
+     "title": "Sky (region 2)",
+     "instruction": "Mix the sky color shown below. Block in region 2 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Use the largest brush that fits the shape; save small brushes for the end.",
+     "est_minutes": 6
+    },
+    {
+     "order": 3,
+     "region_ids": [
+      3
+     ],
+     "title": "Dark foliage (region 3)",
+     "instruction": "Mix the dark foliage color shown below. Block in region 3 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Blend edges while both colors are still wet.",
+     "est_minutes": 11
+    },
+    {
+     "order": 4,
+     "region_ids": [
+      6
+     ],
+     "title": "Deep shadows (region 6)",
+     "instruction": "Mix the deep shadows color shown below. Block in region 6 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Acrylic dries fast, so mix enough for the whole shape before you start.",
+     "est_minutes": 4
+    },
+    {
+     "order": 5,
+     "region_ids": [
+      4
+     ],
+     "title": "Foliage (region 4)",
+     "instruction": "Mix the foliage color shown below. Block in region 4 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Use the largest brush that fits the shape; save small brushes for the end.",
+     "est_minutes": 9
+    },
+    {
+     "order": 6,
+     "region_ids": [
+      5
+     ],
+     "title": "Light ground (region 5)",
+     "instruction": "Mix the light ground color shown below. Block in region 5 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Blend edges while both colors are still wet.",
+     "est_minutes": 5
+    },
+    {
+     "order": 7,
+     "region_ids": [
+      6,
+      1
+     ],
+     "title": "Details and highlights",
+     "instruction": "Switch to a small brush. Add the darkest accents first, then the brightest highlights. Stop while it still looks fresh.",
+     "technique_tip": "Step back from the canvas every few minutes to judge the whole picture.",
+     "est_minutes": 9
+    }
+   ]
+  }
+ },
+ {
+  "name": "watercolor_6_60",
+  "request": {
+   "image_b64": "",
+   "mode": "scene",
+   "medium": "watercolor",
+   "minutes": 60,
+   "palette": [
+    {
+     "id": "titanium-white",
+     "name": "Titanium White",
+     "hex": "#f4f3ee"
+    },
+    {
+     "id": "ultramarine",
+     "name": "Ultramarine Blue",
+     "hex": "#243b8f"
+    },
+    {
+     "id": "cad-yellow-light",
+     "name": "Cadmium Yellow Light Hue",
+     "hex": "#f9d71c"
+    },
+    {
+     "id": "burnt-sienna",
+     "name": "Burnt Sienna",
+     "hex": "#8a3b22"
+    }
+   ],
+   "regions": [
+    {
+     "id": 1,
+     "hex": "#9cc3e6",
+     "lab": [
+      77.0,
+      -6.0,
+      -22.0
+     ],
+     "area_pct": 30.0,
+     "centroid": [
+      256.0,
+      60.0
+     ],
+     "bbox": [
+      0.0,
+      0.0,
+      512.0,
+      130.0
+     ]
+    },
+    {
+     "id": 2,
+     "hex": "#5f7f9c",
+     "lab": [
+      52.0,
+      -4.0,
+      -18.0
+     ],
+     "area_pct": 12.0,
+     "centroid": [
+      300.0,
+      150.0
+     ],
+     "bbox": [
+      0.0,
+      120.0,
+      512.0,
+      60.0
+     ]
+    },
+    {
+     "id": 3,
+     "hex": "#3e5f2c",
+     "lab": [
+      37.0,
+      -20.0,
+      25.0
+     ],
+     "area_pct": 22.0,
+     "centroid": [
+      150.0,
+      230.0
+     ],
+     "bbox": [
+      0.0,
+      170.0,
+      300.0,
+      120.0
+     ]
+    },
+    {
+     "id": 4,
+     "hex": "#7da24a",
+     "lab": [
+      62.0,
+      -25.0,
+      40.0
+     ],
+     "area_pct": 18.0,
+     "centroid": [
+      380.0,
+      300.0
+     ],
+     "bbox": [
+      250.0,
+      230.0,
+      262.0,
+      154.0
+     ]
+    },
+    {
+     "id": 5,
+     "hex": "#c9b38a",
+     "lab": [
+      73.0,
+      3.0,
+      22.0
+     ],
+     "area_pct": 10.0,
+     "centroid": [
+      260.0,
+      340.0
+     ],
+     "bbox": [
+      180.0,
+      300.0,
+      160.0,
+      84.0
+     ]
+    },
+    {
+     "id": 6,
+     "hex": "#2a2a24",
+     "lab": [
+      17.0,
+      -1.0,
+      4.0
+     ],
+     "area_pct": 8.0,
+     "centroid": [
+      90.0,
+      330.0
+     ],
+     "bbox": [
+      0.0,
+      280.0,
+      180.0,
+      104.0
+     ]
+    }
+   ],
+   "recipes": [
+    {
+     "region_id": 1,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#9cc3e6",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 2,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#5f7f9c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 3,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#3e5f2c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 4,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#7da24a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 5,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#c9b38a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 6,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#2a2a24",
+     "delta_e": 3.2
+    }
+   ]
+  },
+  "expected": {
+   "labels": [
+    {
+     "region_id": 1,
+     "label": "pale sky"
+    },
+    {
+     "region_id": 2,
+     "label": "sky"
+    },
+    {
+     "region_id": 3,
+     "label": "dark foliage"
+    },
+    {
+     "region_id": 4,
+     "label": "foliage"
+    },
+    {
+     "region_id": 5,
+     "label": "light ground"
+    },
+    {
+     "region_id": 6,
+     "label": "deep shadows"
+    }
+   ],
+   "steps": [
+    {
+     "order": 1,
+     "region_ids": [
+      1
+     ],
+     "title": "Pale sky (region 1)",
+     "instruction": "Mix the pale sky color shown below with plenty of water. Lay a flat wash over region 1, leaving any lighter areas untouched.",
+     "technique_tip": "Let each wash dry before painting right next to it, or the colors will bleed.",
+     "est_minutes": 16
+    },
+    {
+     "order": 2,
+     "region_ids": [
+      5
+     ],
+     "title": "Light ground (region 5)",
+     "instruction": "Mix the light ground color shown below with plenty of water. Lay a flat wash over region 5, leaving any lighter areas untouched.",
+     "technique_tip": "Leave the paper bare wherever you want the brightest whites.",
+     "est_minutes": 5
+    },
+    {
+     "order": 3,
+     "region_ids": [
+      4
+     ],
+     "title": "Foliage (region 4)",
+     "instruction": "Mix the foliage color shown below with plenty of water. Lay a flat wash over region 4, leaving any lighter areas untouched.",
+     "technique_tip": "Load the brush fully and work quickly to avoid streaks.",
+     "est_minutes": 9
+    },
+    {
+     "order": 4,
+     "region_ids": [
+      2
+     ],
+     "title": "Sky (region 2)",
+     "instruction": "Mix the sky color shown below with plenty of water. Lay a flat wash over region 2, leaving any lighter areas untouched.",
+     "technique_tip": "Let each wash dry before painting right next to it, or the colors will bleed.",
+     "est_minutes": 6
+    },
+    {
+     "order": 5,
+     "region_ids": [
+      3
+     ],
+     "title": "Dark foliage (region 3)",
+     "instruction": "Mix the dark foliage color shown below with plenty of water. Lay a flat wash over region 3, leaving any lighter areas untouched.",
+     "technique_tip": "Leave the paper bare wherever you want the brightest whites.",
+     "est_minutes": 11
+    },
+    {
+     "order": 6,
+     "region_ids": [
+      6
+     ],
+     "title": "Deep shadows (region 6)",
+     "instruction": "Mix the deep shadows color shown below with plenty of water. Lay a flat wash over region 6, leaving any lighter areas untouched.",
+     "technique_tip": "Load the brush fully and work quickly to avoid streaks.",
+     "est_minutes": 4
+    },
+    {
+     "order": 7,
+     "region_ids": [
+      6,
+      1
+     ],
+     "title": "Details and highlights",
+     "instruction": "Switch to a small brush. Add the darkest accents first, then the brightest highlights. Stop while it still looks fresh.",
+     "technique_tip": "Step back from the canvas every few minutes to judge the whole picture.",
+     "est_minutes": 9
+    }
+   ]
+  }
+ },
+ {
+  "name": "oil_4_30",
+  "request": {
+   "image_b64": "",
+   "mode": "scene",
+   "medium": "oil",
+   "minutes": 30,
+   "palette": [
+    {
+     "id": "titanium-white",
+     "name": "Titanium White",
+     "hex": "#f4f3ee"
+    },
+    {
+     "id": "ultramarine",
+     "name": "Ultramarine Blue",
+     "hex": "#243b8f"
+    },
+    {
+     "id": "cad-yellow-light",
+     "name": "Cadmium Yellow Light Hue",
+     "hex": "#f9d71c"
+    },
+    {
+     "id": "burnt-sienna",
+     "name": "Burnt Sienna",
+     "hex": "#8a3b22"
+    }
+   ],
+   "regions": [
+    {
+     "id": 1,
+     "hex": "#9cc3e6",
+     "lab": [
+      77.0,
+      -6.0,
+      -22.0
+     ],
+     "area_pct": 36.6,
+     "centroid": [
+      256.0,
+      60.0
+     ],
+     "bbox": [
+      0.0,
+      0.0,
+      512.0,
+      130.0
+     ]
+    },
+    {
+     "id": 2,
+     "hex": "#5f7f9c",
+     "lab": [
+      52.0,
+      -4.0,
+      -18.0
+     ],
+     "area_pct": 14.6,
+     "centroid": [
+      300.0,
+      150.0
+     ],
+     "bbox": [
+      0.0,
+      120.0,
+      512.0,
+      60.0
+     ]
+    },
+    {
+     "id": 3,
+     "hex": "#3e5f2c",
+     "lab": [
+      37.0,
+      -20.0,
+      25.0
+     ],
+     "area_pct": 26.8,
+     "centroid": [
+      150.0,
+      230.0
+     ],
+     "bbox": [
+      0.0,
+      170.0,
+      300.0,
+      120.0
+     ]
+    },
+    {
+     "id": 4,
+     "hex": "#7da24a",
+     "lab": [
+      62.0,
+      -25.0,
+      40.0
+     ],
+     "area_pct": 22.0,
+     "centroid": [
+      380.0,
+      300.0
+     ],
+     "bbox": [
+      250.0,
+      230.0,
+      262.0,
+      154.0
+     ]
+    }
+   ],
+   "recipes": [
+    {
+     "region_id": 1,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#9cc3e6",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 2,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#5f7f9c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 3,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#3e5f2c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 4,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#7da24a",
+     "delta_e": 3.2
+    }
+   ]
+  },
+  "expected": {
+   "labels": [
+    {
+     "region_id": 1,
+     "label": "pale sky"
+    },
+    {
+     "region_id": 2,
+     "label": "sky"
+    },
+    {
+     "region_id": 3,
+     "label": "dark foliage"
+    },
+    {
+     "region_id": 4,
+     "label": "foliage"
+    }
+   ],
+   "steps": [
+    {
+     "order": 1,
+     "region_ids": [
+      1
+     ],
+     "title": "Pale sky (region 1)",
+     "instruction": "Mix the pale sky color shown below. Block in region 1 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Keep early layers thin and later layers thicker (fat over lean).",
+     "est_minutes": 9
+    },
+    {
+     "order": 2,
+     "region_ids": [
+      2
+     ],
+     "title": "Sky (region 2)",
+     "instruction": "Mix the sky color shown below. Block in region 2 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Use the largest brush that fits the shape; save small brushes for the end.",
+     "est_minutes": 4
+    },
+    {
+     "order": 3,
+     "region_ids": [
+      3
+     ],
+     "title": "Dark foliage (region 3)",
+     "instruction": "Mix the dark foliage color shown below. Block in region 3 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Wipe your brush between colors to keep mixes clean.",
+     "est_minutes": 7
+    },
+    {
+     "order": 4,
+     "region_ids": [
+      4
+     ],
+     "title": "Foliage (region 4)",
+     "instruction": "Mix the foliage color shown below. Block in region 4 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Keep early layers thin and later layers thicker (fat over lean).",
+     "est_minutes": 5
+    },
+    {
+     "order": 5,
+     "region_ids": [
+      3,
+      1
+     ],
+     "title": "Details and highlights",
+     "instruction": "Switch to a small brush. Add the darkest accents first, then the brightest highlights. Stop while it still looks fresh.",
+     "technique_tip": "Step back from the canvas every few minutes to judge the whole picture.",
+     "est_minutes": 5
+    }
+   ]
+  }
+ },
+ {
+  "name": "gouache_10_90",
+  "request": {
+   "image_b64": "",
+   "mode": "scene",
+   "medium": "gouache",
+   "minutes": 90,
+   "palette": [
+    {
+     "id": "titanium-white",
+     "name": "Titanium White",
+     "hex": "#f4f3ee"
+    },
+    {
+     "id": "ultramarine",
+     "name": "Ultramarine Blue",
+     "hex": "#243b8f"
+    },
+    {
+     "id": "cad-yellow-light",
+     "name": "Cadmium Yellow Light Hue",
+     "hex": "#f9d71c"
+    },
+    {
+     "id": "burnt-sienna",
+     "name": "Burnt Sienna",
+     "hex": "#8a3b22"
+    }
+   ],
+   "regions": [
+    {
+     "id": 1,
+     "hex": "#9cc3e6",
+     "lab": [
+      77.0,
+      -6.0,
+      -22.0
+     ],
+     "area_pct": 26.8,
+     "centroid": [
+      256.0,
+      60.0
+     ],
+     "bbox": [
+      0.0,
+      0.0,
+      512.0,
+      130.0
+     ]
+    },
+    {
+     "id": 2,
+     "hex": "#5f7f9c",
+     "lab": [
+      52.0,
+      -4.0,
+      -18.0
+     ],
+     "area_pct": 10.7,
+     "centroid": [
+      300.0,
+      150.0
+     ],
+     "bbox": [
+      0.0,
+      120.0,
+      512.0,
+      60.0
+     ]
+    },
+    {
+     "id": 3,
+     "hex": "#3e5f2c",
+     "lab": [
+      37.0,
+      -20.0,
+      25.0
+     ],
+     "area_pct": 19.6,
+     "centroid": [
+      150.0,
+      230.0
+     ],
+     "bbox": [
+      0.0,
+      170.0,
+      300.0,
+      120.0
+     ]
+    },
+    {
+     "id": 4,
+     "hex": "#7da24a",
+     "lab": [
+      62.0,
+      -25.0,
+      40.0
+     ],
+     "area_pct": 16.1,
+     "centroid": [
+      380.0,
+      300.0
+     ],
+     "bbox": [
+      250.0,
+      230.0,
+      262.0,
+      154.0
+     ]
+    },
+    {
+     "id": 5,
+     "hex": "#c9b38a",
+     "lab": [
+      73.0,
+      3.0,
+      22.0
+     ],
+     "area_pct": 8.9,
+     "centroid": [
+      260.0,
+      340.0
+     ],
+     "bbox": [
+      180.0,
+      300.0,
+      160.0,
+      84.0
+     ]
+    },
+    {
+     "id": 6,
+     "hex": "#2a2a24",
+     "lab": [
+      17.0,
+      -1.0,
+      4.0
+     ],
+     "area_pct": 7.1,
+     "centroid": [
+      90.0,
+      330.0
+     ],
+     "bbox": [
+      0.0,
+      280.0,
+      180.0,
+      104.0
+     ]
+    },
+    {
+     "id": 7,
+     "hex": "#e8e4da",
+     "lab": [
+      91.0,
+      0.0,
+      5.0
+     ],
+     "area_pct": 3.6,
+     "centroid": [
+      420.0,
+      40.0
+     ],
+     "bbox": [
+      360.0,
+      10.0,
+      120.0,
+      60.0
+     ]
+    },
+    {
+     "id": 8,
+     "hex": "#8a4a2a",
+     "lab": [
+      40.0,
+      20.0,
+      28.0
+     ],
+     "area_pct": 2.7,
+     "centroid": [
+      470.0,
+      350.0
+     ],
+     "bbox": [
+      440.0,
+      320.0,
+      72.0,
+      64.0
+     ]
+    },
+    {
+     "id": 9,
+     "hex": "#4a6a8a",
+     "lab": [
+      43.0,
+      -3.0,
+      -20.0
+     ],
+     "area_pct": 2.7,
+     "centroid": [
+      100.0,
+      360.0
+     ],
+     "bbox": [
+      40.0,
+      340.0,
+      120.0,
+      44.0
+     ]
+    },
+    {
+     "id": 10,
+     "hex": "#b0a050",
+     "lab": [
+      65.0,
+      -3.0,
+      45.0
+     ],
+     "area_pct": 1.8,
+     "centroid": [
+      200.0,
+      260.0
+     ],
+     "bbox": [
+      170.0,
+      240.0,
+      60.0,
+      40.0
+     ]
+    }
+   ],
+   "recipes": [
+    {
+     "region_id": 1,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#9cc3e6",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 2,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#5f7f9c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 3,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#3e5f2c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 4,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#7da24a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 5,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#c9b38a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 6,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#2a2a24",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 7,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#e8e4da",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 8,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#8a4a2a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 9,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#4a6a8a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 10,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#b0a050",
+     "delta_e": 3.2
+    }
+   ]
+  },
+  "expected": {
+   "labels": [
+    {
+     "region_id": 1,
+     "label": "pale sky"
+    },
+    {
+     "region_id": 2,
+     "label": "sky"
+    },
+    {
+     "region_id": 3,
+     "label": "dark foliage"
+    },
+    {
+     "region_id": 4,
+     "label": "foliage"
+    },
+    {
+     "region_id": 5,
+     "label": "light ground"
+    },
+    {
+     "region_id": 6,
+     "label": "deep shadows"
+    },
+    {
+     "region_id": 7,
+     "label": "clouds and highlights"
+    },
+    {
+     "region_id": 8,
+     "label": "warm earth"
+    },
+    {
+     "region_id": 9,
+     "label": "water"
+    },
+    {
+     "region_id": 10,
+     "label": "yellow-green ground"
+    }
+   ],
+   "steps": [
+    {
+     "order": 1,
+     "region_ids": [
+      1
+     ],
+     "title": "Pale sky (region 1)",
+     "instruction": "Mix the pale sky color shown below. Block in region 1 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Gouache can dry a little lighter or darker, so test on the canvas edge first.",
+     "est_minutes": 24
+    },
+    {
+     "order": 2,
+     "region_ids": [
+      7
+     ],
+     "title": "Clouds and highlights (region 7)",
+     "instruction": "Mix the clouds and highlights color shown below. Block in region 7 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Keep the paint creamy, not watery, for flat even coverage.",
+     "est_minutes": 3
+    },
+    {
+     "order": 3,
+     "region_ids": [
+      2
+     ],
+     "title": "Sky (region 2)",
+     "instruction": "Mix the sky color shown below. Block in region 2 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Don't overwork a layer; let it dry before painting on top.",
+     "est_minutes": 10
+    },
+    {
+     "order": 4,
+     "region_ids": [
+      3
+     ],
+     "title": "Dark foliage (region 3)",
+     "instruction": "Mix the dark foliage color shown below. Block in region 3 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Gouache can dry a little lighter or darker, so test on the canvas edge first.",
+     "est_minutes": 18
+    },
+    {
+     "order": 5,
+     "region_ids": [
+      10
+     ],
+     "title": "Yellow-green ground (region 10)",
+     "instruction": "Mix the yellow-green ground color shown below. Block in region 10 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Keep the paint creamy, not watery, for flat even coverage.",
+     "est_minutes": 2
+    },
+    {
+     "order": 6,
+     "region_ids": [
+      6
+     ],
+     "title": "Deep shadows (region 6)",
+     "instruction": "Mix the deep shadows color shown below. Block in region 6 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Don't overwork a layer; let it dry before painting on top.",
+     "est_minutes": 6
+    },
+    {
+     "order": 7,
+     "region_ids": [
+      8
+     ],
+     "title": "Warm earth (region 8)",
+     "instruction": "Mix the warm earth color shown below. Block in region 8 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Gouache can dry a little lighter or darker, so test on the canvas edge first.",
+     "est_minutes": 2
+    },
+    {
+     "order": 8,
+     "region_ids": [
+      9
+     ],
+     "title": "Water (region 9)",
+     "instruction": "Mix the water color shown below. Block in region 9 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Keep the paint creamy, not watery, for flat even coverage.",
+     "est_minutes": 2
+    },
+    {
+     "order": 9,
+     "region_ids": [
+      4
+     ],
+     "title": "Foliage (region 4)",
+     "instruction": "Mix the foliage color shown below. Block in region 4 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Don't overwork a layer; let it dry before painting on top.",
+     "est_minutes": 15
+    },
+    {
+     "order": 10,
+     "region_ids": [
+      5
+     ],
+     "title": "Light ground (region 5)",
+     "instruction": "Mix the light ground color shown below. Block in region 5 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Gouache can dry a little lighter or darker, so test on the canvas edge first.",
+     "est_minutes": 8
+    }
+   ]
+  }
+ },
+ {
+  "name": "acrylic_1_30",
+  "request": {
+   "image_b64": "",
+   "mode": "scene",
+   "medium": "acrylic",
+   "minutes": 30,
+   "palette": [
+    {
+     "id": "titanium-white",
+     "name": "Titanium White",
+     "hex": "#f4f3ee"
+    },
+    {
+     "id": "ultramarine",
+     "name": "Ultramarine Blue",
+     "hex": "#243b8f"
+    },
+    {
+     "id": "cad-yellow-light",
+     "name": "Cadmium Yellow Light Hue",
+     "hex": "#f9d71c"
+    },
+    {
+     "id": "burnt-sienna",
+     "name": "Burnt Sienna",
+     "hex": "#8a3b22"
+    }
+   ],
+   "regions": [
+    {
+     "id": 1,
+     "hex": "#9cc3e6",
+     "lab": [
+      77.0,
+      -6.0,
+      -22.0
+     ],
+     "area_pct": 100.0,
+     "centroid": [
+      256.0,
+      60.0
+     ],
+     "bbox": [
+      0.0,
+      0.0,
+      512.0,
+      130.0
+     ]
+    }
+   ],
+   "recipes": [
+    {
+     "region_id": 1,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#9cc3e6",
+     "delta_e": 3.2
+    }
+   ]
+  },
+  "expected": {
+   "labels": [
+    {
+     "region_id": 1,
+     "label": "water"
+    }
+   ],
+   "steps": [
+    {
+     "order": 1,
+     "region_ids": [
+      1
+     ],
+     "title": "Water (region 1)",
+     "instruction": "Mix the water color shown below. Block in region 1 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Acrylic dries fast, so mix enough for the whole shape before you start.",
+     "est_minutes": 25
+    },
+    {
+     "order": 2,
+     "region_ids": [
+      1
+     ],
+     "title": "Details and highlights",
+     "instruction": "Switch to a small brush. Add the darkest accents first, then the brightest highlights. Stop while it still looks fresh.",
+     "technique_tip": "Step back from the canvas every few minutes to judge the whole picture.",
+     "est_minutes": 5
+    }
+   ]
+  }
+ },
+ {
+  "name": "watercolor_9_90",
+  "request": {
+   "image_b64": "",
+   "mode": "scene",
+   "medium": "watercolor",
+   "minutes": 90,
+   "palette": [
+    {
+     "id": "titanium-white",
+     "name": "Titanium White",
+     "hex": "#f4f3ee"
+    },
+    {
+     "id": "ultramarine",
+     "name": "Ultramarine Blue",
+     "hex": "#243b8f"
+    },
+    {
+     "id": "cad-yellow-light",
+     "name": "Cadmium Yellow Light Hue",
+     "hex": "#f9d71c"
+    },
+    {
+     "id": "burnt-sienna",
+     "name": "Burnt Sienna",
+     "hex": "#8a3b22"
+    }
+   ],
+   "regions": [
+    {
+     "id": 1,
+     "hex": "#9cc3e6",
+     "lab": [
+      77.0,
+      -6.0,
+      -22.0
+     ],
+     "area_pct": 27.3,
+     "centroid": [
+      256.0,
+      60.0
+     ],
+     "bbox": [
+      0.0,
+      0.0,
+      512.0,
+      130.0
+     ]
+    },
+    {
+     "id": 2,
+     "hex": "#5f7f9c",
+     "lab": [
+      52.0,
+      -4.0,
+      -18.0
+     ],
+     "area_pct": 10.9,
+     "centroid": [
+      300.0,
+      150.0
+     ],
+     "bbox": [
+      0.0,
+      120.0,
+      512.0,
+      60.0
+     ]
+    },
+    {
+     "id": 3,
+     "hex": "#3e5f2c",
+     "lab": [
+      37.0,
+      -20.0,
+      25.0
+     ],
+     "area_pct": 20.0,
+     "centroid": [
+      150.0,
+      230.0
+     ],
+     "bbox": [
+      0.0,
+      170.0,
+      300.0,
+      120.0
+     ]
+    },
+    {
+     "id": 4,
+     "hex": "#7da24a",
+     "lab": [
+      62.0,
+      -25.0,
+      40.0
+     ],
+     "area_pct": 16.4,
+     "centroid": [
+      380.0,
+      300.0
+     ],
+     "bbox": [
+      250.0,
+      230.0,
+      262.0,
+      154.0
+     ]
+    },
+    {
+     "id": 5,
+     "hex": "#c9b38a",
+     "lab": [
+      73.0,
+      3.0,
+      22.0
+     ],
+     "area_pct": 9.1,
+     "centroid": [
+      260.0,
+      340.0
+     ],
+     "bbox": [
+      180.0,
+      300.0,
+      160.0,
+      84.0
+     ]
+    },
+    {
+     "id": 6,
+     "hex": "#2a2a24",
+     "lab": [
+      17.0,
+      -1.0,
+      4.0
+     ],
+     "area_pct": 7.3,
+     "centroid": [
+      90.0,
+      330.0
+     ],
+     "bbox": [
+      0.0,
+      280.0,
+      180.0,
+      104.0
+     ]
+    },
+    {
+     "id": 7,
+     "hex": "#e8e4da",
+     "lab": [
+      91.0,
+      0.0,
+      5.0
+     ],
+     "area_pct": 3.6,
+     "centroid": [
+      420.0,
+      40.0
+     ],
+     "bbox": [
+      360.0,
+      10.0,
+      120.0,
+      60.0
+     ]
+    },
+    {
+     "id": 8,
+     "hex": "#8a4a2a",
+     "lab": [
+      40.0,
+      20.0,
+      28.0
+     ],
+     "area_pct": 2.7,
+     "centroid": [
+      470.0,
+      350.0
+     ],
+     "bbox": [
+      440.0,
+      320.0,
+      72.0,
+      64.0
+     ]
+    },
+    {
+     "id": 9,
+     "hex": "#4a6a8a",
+     "lab": [
+      43.0,
+      -3.0,
+      -20.0
+     ],
+     "area_pct": 2.7,
+     "centroid": [
+      100.0,
+      360.0
+     ],
+     "bbox": [
+      40.0,
+      340.0,
+      120.0,
+      44.0
+     ]
+    }
+   ],
+   "recipes": [
+    {
+     "region_id": 1,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#9cc3e6",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 2,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#5f7f9c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 3,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#3e5f2c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 4,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#7da24a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 5,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#c9b38a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 6,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#2a2a24",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 7,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#e8e4da",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 8,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#8a4a2a",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 9,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#4a6a8a",
+     "delta_e": 3.2
+    }
+   ]
+  },
+  "expected": {
+   "labels": [
+    {
+     "region_id": 1,
+     "label": "pale sky"
+    },
+    {
+     "region_id": 2,
+     "label": "sky"
+    },
+    {
+     "region_id": 3,
+     "label": "dark foliage"
+    },
+    {
+     "region_id": 4,
+     "label": "foliage"
+    },
+    {
+     "region_id": 5,
+     "label": "light ground"
+    },
+    {
+     "region_id": 6,
+     "label": "deep shadows"
+    },
+    {
+     "region_id": 7,
+     "label": "clouds and highlights"
+    },
+    {
+     "region_id": 8,
+     "label": "warm earth"
+    },
+    {
+     "region_id": 9,
+     "label": "water"
+    }
+   ],
+   "steps": [
+    {
+     "order": 1,
+     "region_ids": [
+      7
+     ],
+     "title": "Clouds and highlights (region 7)",
+     "instruction": "Mix the clouds and highlights color shown below with plenty of water. Lay a flat wash over region 7, leaving any lighter areas untouched.",
+     "technique_tip": "Let each wash dry before painting right next to it, or the colors will bleed.",
+     "est_minutes": 3
+    },
+    {
+     "order": 2,
+     "region_ids": [
+      1
+     ],
+     "title": "Pale sky (region 1)",
+     "instruction": "Mix the pale sky color shown below with plenty of water. Lay a flat wash over region 1, leaving any lighter areas untouched.",
+     "technique_tip": "Leave the paper bare wherever you want the brightest whites.",
+     "est_minutes": 21
+    },
+    {
+     "order": 3,
+     "region_ids": [
+      5
+     ],
+     "title": "Light ground (region 5)",
+     "instruction": "Mix the light ground color shown below with plenty of water. Lay a flat wash over region 5, leaving any lighter areas untouched.",
+     "technique_tip": "Load the brush fully and work quickly to avoid streaks.",
+     "est_minutes": 7
+    },
+    {
+     "order": 4,
+     "region_ids": [
+      4
+     ],
+     "title": "Foliage (region 4)",
+     "instruction": "Mix the foliage color shown below with plenty of water. Lay a flat wash over region 4, leaving any lighter areas untouched.",
+     "technique_tip": "Let each wash dry before painting right next to it, or the colors will bleed.",
+     "est_minutes": 12
+    },
+    {
+     "order": 5,
+     "region_ids": [
+      2
+     ],
+     "title": "Sky (region 2)",
+     "instruction": "Mix the sky color shown below with plenty of water. Lay a flat wash over region 2, leaving any lighter areas untouched.",
+     "technique_tip": "Leave the paper bare wherever you want the brightest whites.",
+     "est_minutes": 8
+    },
+    {
+     "order": 6,
+     "region_ids": [
+      9
+     ],
+     "title": "Water (region 9)",
+     "instruction": "Mix the water color shown below with plenty of water. Lay a flat wash over region 9, leaving any lighter areas untouched.",
+     "technique_tip": "Load the brush fully and work quickly to avoid streaks.",
+     "est_minutes": 2
+    },
+    {
+     "order": 7,
+     "region_ids": [
+      8
+     ],
+     "title": "Warm earth (region 8)",
+     "instruction": "Mix the warm earth color shown below with plenty of water. Lay a flat wash over region 8, leaving any lighter areas untouched.",
+     "technique_tip": "Let each wash dry before painting right next to it, or the colors will bleed.",
+     "est_minutes": 2
+    },
+    {
+     "order": 8,
+     "region_ids": [
+      3
+     ],
+     "title": "Dark foliage (region 3)",
+     "instruction": "Mix the dark foliage color shown below with plenty of water. Lay a flat wash over region 3, leaving any lighter areas untouched.",
+     "technique_tip": "Leave the paper bare wherever you want the brightest whites.",
+     "est_minutes": 15
+    },
+    {
+     "order": 9,
+     "region_ids": [
+      6
+     ],
+     "title": "Deep shadows (region 6)",
+     "instruction": "Mix the deep shadows color shown below with plenty of water. Lay a flat wash over region 6, leaving any lighter areas untouched.",
+     "technique_tip": "Load the brush fully and work quickly to avoid streaks.",
+     "est_minutes": 6
+    },
+    {
+     "order": 10,
+     "region_ids": [
+      6,
+      7
+     ],
+     "title": "Details and highlights",
+     "instruction": "Switch to a small brush. Add the darkest accents first, then the brightest highlights. Stop while it still looks fresh.",
+     "technique_tip": "Step back from the canvas every few minutes to judge the whole picture.",
+     "est_minutes": 14
+    }
+   ]
+  }
+ },
+ {
+  "name": "acrylic_3_5",
+  "request": {
+   "image_b64": "",
+   "mode": "scene",
+   "medium": "acrylic",
+   "minutes": 5,
+   "palette": [
+    {
+     "id": "titanium-white",
+     "name": "Titanium White",
+     "hex": "#f4f3ee"
+    },
+    {
+     "id": "ultramarine",
+     "name": "Ultramarine Blue",
+     "hex": "#243b8f"
+    },
+    {
+     "id": "cad-yellow-light",
+     "name": "Cadmium Yellow Light Hue",
+     "hex": "#f9d71c"
+    },
+    {
+     "id": "burnt-sienna",
+     "name": "Burnt Sienna",
+     "hex": "#8a3b22"
+    }
+   ],
+   "regions": [
+    {
+     "id": 1,
+     "hex": "#9cc3e6",
+     "lab": [
+      77.0,
+      -6.0,
+      -22.0
+     ],
+     "area_pct": 46.9,
+     "centroid": [
+      256.0,
+      60.0
+     ],
+     "bbox": [
+      0.0,
+      0.0,
+      512.0,
+      130.0
+     ]
+    },
+    {
+     "id": 2,
+     "hex": "#5f7f9c",
+     "lab": [
+      52.0,
+      -4.0,
+      -18.0
+     ],
+     "area_pct": 18.8,
+     "centroid": [
+      300.0,
+      150.0
+     ],
+     "bbox": [
+      0.0,
+      120.0,
+      512.0,
+      60.0
+     ]
+    },
+    {
+     "id": 3,
+     "hex": "#3e5f2c",
+     "lab": [
+      37.0,
+      -20.0,
+      25.0
+     ],
+     "area_pct": 34.4,
+     "centroid": [
+      150.0,
+      230.0
+     ],
+     "bbox": [
+      0.0,
+      170.0,
+      300.0,
+      120.0
+     ]
+    }
+   ],
+   "recipes": [
+    {
+     "region_id": 1,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#9cc3e6",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 2,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#5f7f9c",
+     "delta_e": 3.2
+    },
+    {
+     "region_id": 3,
+     "parts": [
+      {
+       "paint_id": "ultramarine",
+       "parts": 1
+      },
+      {
+       "paint_id": "titanium-white",
+       "parts": 3
+      }
+     ],
+     "result_hex": "#3e5f2c",
+     "delta_e": 3.2
+    }
+   ]
+  },
+  "expected": {
+   "labels": [
+    {
+     "region_id": 1,
+     "label": "pale sky"
+    },
+    {
+     "region_id": 2,
+     "label": "water"
+    },
+    {
+     "region_id": 3,
+     "label": "dark foliage"
+    }
+   ],
+   "steps": [
+    {
+     "order": 1,
+     "region_ids": [
+      1
+     ],
+     "title": "Pale sky (region 1)",
+     "instruction": "Mix the pale sky color shown below. Block in region 1 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Acrylic dries fast, so mix enough for the whole shape before you start.",
+     "est_minutes": 2
+    },
+    {
+     "order": 2,
+     "region_ids": [
+      2
+     ],
+     "title": "Water (region 2)",
+     "instruction": "Mix the water color shown below. Block in region 2 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Use the largest brush that fits the shape; save small brushes for the end.",
+     "est_minutes": 1
+    },
+    {
+     "order": 3,
+     "region_ids": [
+      3
+     ],
+     "title": "Dark foliage (region 3)",
+     "instruction": "Mix the dark foliage color shown below. Block in region 3 with broad strokes, covering the whole shape before refining edges.",
+     "technique_tip": "Blend edges while both colors are still wet.",
+     "est_minutes": 1
+    },
+    {
+     "order": 4,
+     "region_ids": [
+      3,
+      1
+     ],
+     "title": "Details and highlights",
+     "instruction": "Switch to a small brush. Add the darkest accents first, then the brightest highlights. Stop while it still looks fresh.",
+     "technique_tip": "Step back from the canvas every few minutes to judge the whole picture.",
+     "est_minutes": 1
+    }
+   ]
+  }
+ }
+]

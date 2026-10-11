@@ -7,8 +7,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings, get_settings
+from .providers import Provider, get_provider
+from .schemas import AskRequest, AskResponse, PlanRequest, PlanResponse
 
 settings: Settings = get_settings()
+provider: Provider = get_provider(settings)
 
 app = FastAPI(title="Fieldmix")
 app.add_middleware(
@@ -47,3 +50,15 @@ async def health() -> dict[str, object]:
         "tts": settings.tts_provider,
         "model_ready": ready,
     }
+
+
+@app.post("/api/plan")
+async def plan(req: PlanRequest) -> PlanResponse:
+    """Label regions and order the painting steps (Gemma, or the fallback planner)."""
+    return await provider.plan(req)
+
+
+@app.post("/api/ask")
+async def ask(req: AskRequest) -> AskResponse:
+    """Answer a mid-session question about the current step."""
+    return AskResponse(answer=await provider.ask(req))

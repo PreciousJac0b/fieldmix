@@ -156,12 +156,12 @@ fieldmix/
     tests/       (Vitest)
   server/
     requirements.txt
-    app/main.py  app/config.py  app/schemas.py  app/fallback.py  app/validate.py  app/ratelimit.py  app/logging.py
+    app/main.py  app/config.py  app/schemas.py  app/fallback.py  app/validate.py  app/paint_names.py  app/ratelimit.py  app/calllog.py
     app/providers/  base.py  ollama.py  gemini.py
     app/tts/        base.py  piper.py  elevenlabs.py
     app/prompts/    plan.md  ask.md
     tests/       (pytest)
-  scripts/   dev.sh  pull_model.sh  smoke_test.py  fieldtest.sh  eval.ts  eval.py
+  scripts/   dev.sh  pull_model.sh  smoke_test.py  fieldtest.sh  eval.ts  eval.py  make_plan_request.ts  image_io.ts
   eval/      results.md
 ```
 
@@ -198,7 +198,7 @@ Seven phases, each ending in a demo you can run. Phases 0 to 3 are the minimum s
 ### Phase 2: Gemma planner backend
 
 - [ ] `providers/base.py`: a `Provider` interface with `plan(req) -> PlanResponse` and `ask(req) -> str`. Pydantic models in `schemas.py` match the API contract exactly, plus a separate model-output model (`labels`, `steps`) used for the schema.
-- [ ] `providers/ollama.py`: call `/api/chat` with the image (already 768 px from the browser), `format` set to the JSON schema of the model-output model, temperature 0.3, timeout 120 s.
+- [ ] `providers/ollama.py`: call `/api/chat` with the image (already 768 px from the browser), `format` set to the JSON schema of the model-output model, temperature 0.3, timeout 120 s, `think: false`. If Ollama answers 501 "structured output is unavailable" (Homebrew Ollama 0.40.2's MLX runner ships without xgrammar), resend without `format` with the JSON shape in the prompt, remember that for the session, and rely on validation, retry, and fallback. The JSON parser takes the first complete object and repairs the one observed slip (closing the object right after `labels`).
 - [ ] `prompts/plan.md`, the system prompt. It must say: you are a patient plein air painting teacher; use only the region ids given; never state mixing ratios or amounts, and never name a paint that is not in the palette; acrylic, oil, and gouache go background to foreground and big shapes before detail; watercolor goes light to dark and reserves the whites; in artwork mode, follow the reference painting's likely layer order and simplify it for beginners; 5 to 10 steps; each instruction under 60 words; step times should add up to roughly the user's available minutes.
 - [ ] Validation (`validate.py`): every `region_id` exists; every region appears in at least one step; no ratio patterns in any text field; no known paint name (from the preset list) that is not in the user's palette. On failure, retry once with the validation error appended. On a second failure, use the deterministic fallback planner (`fallback.py`: sort by vertical position, then by lightness according to medium) and set `source: "fallback"`.
 - [ ] Fallback parity: `fixtures/planner_parity.json` holds inputs and expected outputs; both `server/app/fallback.py` and `web/src/plan/fallback.ts` are tested against it.
@@ -294,6 +294,7 @@ Only start a stretch goal once Phase 6 is done. Each is self-contained, so Claud
 
 ## Spec changelog
 
+- **2026-10-11:** Phase 2 findings: Ollama `format` unavailable on the Homebrew build (prompted-JSON fallback added); `think: false` adopted after measuring 17.9 s vs 6.2 s median plan latency; log module named `calllog.py` (not `logging.py`, which would read like the stdlib module); `eval.py` and `make_plan_request.ts` built early for the Phase 2 live run.
 - **2026-10-10:** Integrated review fixes: Gemma never states ratios (template-inserted recipes plus a ratio check); single Render web service; eval split into `eval.ts` + `eval.py`; fallback planner parity fixture; 512 px / 768 px image split; Android Chrome secure-context handling (flag + video wake-lock fallback, no mkcert); audio unlock gesture; Vite `/api` proxy and FastAPI serving `web/dist` from Phase 3; recipe search limits, GCD dedupe, and hue-bracket pruning; test-dab may use any palette paint and has a "no single-part fix" outcome; chroma threshold and lighten-without-white rule; linear-light white balance; model-output-only schema and `current_step` as int; Gemini capability check; unverified model sizes flagged; preset and eval palettes defined; repo layout completed; synthetic-image test at k = 6; Phase 3 "backend stopped" defined; hand-written rate limiter with `X-Forwarded-For`; Piper voice license check; file renamed to `CLAUDE.md`. Added context (Android, Python 3.12, GitHub repo name) and the Week 1 deadline plan.
 
 **Sources**

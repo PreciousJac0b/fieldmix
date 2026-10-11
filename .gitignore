@@ -22,3 +22,4 @@ voices/
 
 # Local-only test images (not licensed for the repo)
 web/public/_local/
+eval/requests_local/
