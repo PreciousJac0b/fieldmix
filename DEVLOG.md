@@ -367,3 +367,10 @@ Tests: web 87/87, server 92/92.
 - **Model eval** (`scripts/eval.py`, 3 photos × acrylic/watercolor × 3 runs): **18/18 valid on the first try**, 0 fallbacks, p50 7.0 s, p95 13.1 s. The 13.1 s was the first request (model load); warm runs took 4.7–9.6 s. This meets the Phase 2 "done when" (valid plans on all three fixture scenes).
 - **Screenshots** in the post now use the park photo: grass → 4 Burnt Sienna + 3 Phthalo Blue + 1 White (ΔE 2.1); Gemma's plan runs sky → distant trees → mid-ground foliage → trunks → grass shadows → dark foliage detail; the dusk sky → 5 White + 1 Alizarin + 1 Phthalo, and Too dark adds one White.
 - `eval/results.md`, the README and the post quote these numbers. The stand-in run stays in this log only.
+
+### 2026-10-11 — The real photos caught a line-art false positive
+
+- **Bug:** the dusk street fixture (93% low-chroma regions: asphalt L* 56 at 45%, sky L* 84, dark greens) passed `isLineArt` (90% neutral or more), so the Colors page opened on Color it in, with no Before / after.
+- **Fix:** an outline drawing or blank canvas is also mostly paper. `isLineArt` now also needs at least 50% of the picture to be light, neutral paper (L* ≥ 70, chroma < 10). Measured: street → no (largest light region 15%); park and beach → no (not neutral enough); both user drawings and the drawn sunflower → yes (84–92% paper at L* 96–100). A new test covers a dusk-like grey scene (not line art) and a canvas photographed in dim light (paper L* ≈ 75, still line art). Web tests: 131.
+- **Checked in the browser:** street → Color map + Before / after, overall match Good (ΔE 2.6, student set); waterfront → Good (ΔE 3.1). The small pink cloud merges into the sky, and the bridge survives as a broken line.
+- **Post:** the "I took it outside" section says plainly that the photos were taken outside and run through Fieldmix afterwards, not used at the easel.

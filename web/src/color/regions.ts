@@ -310,7 +310,20 @@ export function neutralShare(regions: Region[]): number {
 /** Share of neutral area above which a photo is treated as line art (outline drawing or blank canvas). */
 export const LINE_ART_SHARE = 0.9
 
-/** True when the picture is (almost) all black, white and grey, so there are no colors to mix. */
+/** Lightness (L*) from which a neutral region counts as paper: the white of a page or canvas. */
+export const PAPER_L = 70
+/** Share of the picture that must be paper for line art. */
+export const PAPER_SHARE = 0.5
+
+/**
+ * True when the picture is an outline drawing or blank canvas: (almost) all black, white
+ * and grey, and mostly light paper. Being neutral isn't enough on its own: a photo in
+ * dim evening light can be over 90% low-chroma greys (measured on a street at dusk, whose
+ * largest region was L* 56 asphalt), but it has no dominant white paper.
+ */
 export function isLineArt(regions: Region[]): boolean {
-  return neutralShare(regions) >= LINE_ART_SHARE
+  if (neutralShare(regions) < LINE_ART_SHARE) return false
+  const total = regions.reduce((s, r) => s + r.area_pct, 0) || 1
+  const paper = regions.filter((r) => r.lab[0] >= PAPER_L && Math.hypot(r.lab[1], r.lab[2]) < NEUTRAL_CHROMA).reduce((s, r) => s + r.area_pct, 0)
+  return paper / total >= PAPER_SHARE
 }

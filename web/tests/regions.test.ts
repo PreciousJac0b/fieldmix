@@ -170,4 +170,15 @@ describe('neutralShare (line-art detection)', () => {
     expect(isLineArt(extractRegions(lineArt, { k: 6, seed: 1 }).regions)).toBe(true)
     expect(isLineArt(extractRegions(scene, { k: 6, seed: 1 }).regions)).toBe(false)
   })
+
+  it('does not mistake a dim, grey photo for line art', () => {
+    // Like the dusk street fixture: nearly all low-chroma greys, but no white paper.
+    const dusk = makeImage(100, 100, (_x, y) => (y < 20 ? [205, 200, 198] : y < 70 ? [135, 132, 136] : y < 85 ? [80, 88, 82] : [40, 46, 42]))
+    const regions = extractRegions(dusk, { k: 6, seed: 1 }).regions
+    expect(neutralShare(regions)).toBeGreaterThan(0.9)
+    expect(isLineArt(regions)).toBe(false)
+    // A canvas photographed in dim light still counts: greyish paper, dark lines.
+    const dimCanvas = makeImage(100, 100, (x) => (x % 10 < 2 ? [40, 40, 40] : [185, 184, 180]))
+    expect(isLineArt(extractRegions(dimCanvas, { k: 6, seed: 1 }).regions)).toBe(true)
+  })
 })
