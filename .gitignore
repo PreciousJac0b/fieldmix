@@ -23,3 +23,6 @@ voices/
 # Local-only test images (not licensed for the repo)
 web/public/_local/
 eval/requests_local/
+
+# Images for the DEV post that aren't ours to license (uploaded in DEV's editor instead)
+docs/upload-to-dev/
