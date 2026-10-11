@@ -56,6 +56,11 @@ export interface Session {
   offline: boolean
   stepIndex: number
   coloring: ColoringState | null
+  /**
+   * The picture Gemma plans from when it isn't the photo: after Color it in, the drawing
+   * colored with the painter's choices (bare base64 JPEG), so the labels match the colors.
+   */
+  planImage: string | null
 }
 
 export function newSession(): Session {
@@ -70,6 +75,7 @@ export function newSession(): Session {
     offline: false,
     stepIndex: 0,
     coloring: null,
+    planImage: null,
   }
 }
 
@@ -121,7 +127,7 @@ export function spokenStep(s: Session, step: Step): string {
 /** The /api/plan body: the 768 px photo, regions, and each region's current recipe. */
 export function buildPlanRequest(sess: Session): PlanRequest {
   return {
-    image_b64: sess.photo?.jpeg768 ?? '',
+    image_b64: sess.planImage ?? sess.photo?.jpeg768 ?? '',
     mode: sess.setup.mode,
     medium: sess.setup.medium,
     minutes: sess.setup.minutes,

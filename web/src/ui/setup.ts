@@ -69,6 +69,7 @@ export function renderSetup(s: Session, onPhoto: () => void, onBack: () => void)
       s.photo = await loadPhoto(file)
       s.regions = null // force a fresh color map
       s.coloring = null
+      s.planImage = null
       s.plan = null
       status.textContent = ''
       onPhoto()

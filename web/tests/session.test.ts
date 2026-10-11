@@ -78,4 +78,11 @@ describe('buildPlanRequest', () => {
     expect(req.recipes[0]).toEqual({ region_id: 1, parts: s.working.get(1), result_hex: '#9ab', delta_e: 3.1 })
     expect(req.palette[0]).toEqual({ id: palette[0].id, name: palette[0].name, hex: palette[0].hex })
   })
+
+  it('sends the colored-in drawing instead of the blank one after Color it in', () => {
+    const s = sessionWithPlan()
+    s.photo = { canvas: {} as HTMLCanvasElement, pixels: {} as ImageData, jpeg768: 'blank-drawing' }
+    s.planImage = 'colored-drawing'
+    expect(buildPlanRequest(s).image_b64).toBe('colored-drawing')
+  })
 })

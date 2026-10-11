@@ -27,6 +27,7 @@ import { hexToRgb8 } from '../color/preview.ts'
 import { classifyPalette } from '../color/recipes.ts'
 import { recipeText, type ColoringState, type Session } from '../session.ts'
 import { chip, h } from './dom.ts'
+import { canvasToJpegBase64 } from './image.ts'
 import { icon, tube, type IconName } from './icons.ts'
 import { actionBar } from './layout.ts'
 
@@ -152,13 +153,22 @@ function colorRow(hex: string, name: string, detail: string, number?: number): H
 export function applyColoring(s: Session): void {
   const st = s.coloring!
   const m = modelFor(s)
-  const { regions, labelMap, keys } = regionsFromColoring(m, resolveFills(m, st.fills), st.choices)
+  const fills = resolveFills(m, st.fills)
+  const { regions, labelMap, keys } = regionsFromColoring(m, fills, st.choices)
   s.regions = { regions, labelMap, width: m.width, height: m.height }
   s.recipes = regions.map((r, i) => {
     const c = st.choices.get(keys[i])!
     return { target_id: r.id, closest_possible: false, options: [{ parts: c.parts, result_hex: c.hex, result_lab: c.lab, delta_e: 0 }] }
   })
   s.working = new Map(regions.map((r, i) => [r.id, st.choices.get(keys[i])!.parts]))
+  // Gemma plans from the colored-in drawing, not the blank one, so it can see which color
+  // is the petals and which is the pot.
+  const rgb = new Map([...fills].map(([shape, key]) => [shape, hexToRgb8(st.choices.get(key)!.hex)]))
+  const c = document.createElement('canvas')
+  c.width = m.width
+  c.height = m.height
+  c.getContext('2d')!.putImageData(new ImageData(renderColoring(m, rgb, LINE_RGB, CANVAS_RGB, USER_RGB), m.width, m.height), 0, 0)
+  s.planImage = canvasToJpegBase64(c, 0.85)
   s.plan = null
 }
 

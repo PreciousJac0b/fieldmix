@@ -374,3 +374,11 @@ Tests: web 87/87, server 92/92.
 - **Fix:** an outline drawing or blank canvas is also mostly paper. `isLineArt` now also needs at least 50% of the picture to be light, neutral paper (L* ≥ 70, chroma < 10). Measured: street → no (largest light region 15%); park and beach → no (not neutral enough); both user drawings and the drawn sunflower → yes (84–92% paper at L* 96–100). A new test covers a dusk-like grey scene (not line art) and a canvas photographed in dim light (paper L* ≈ 75, still line art). Web tests: 131.
 - **Checked in the browser:** street → Color map + Before / after, overall match Good (ΔE 2.6, student set); waterfront → Good (ΔE 3.1). The small pink cloud merges into the sky, and the bridge survives as a broken line.
 - **Post:** the "I took it outside" section says plainly that the photos were taken outside and run through Fieldmix afterwards, not used at the easel.
+
+### 2026-10-11 — Demo GIF; Color it in plans now use the colored drawing
+
+- **Bug (found while recording):** after "Paint with these colors", `buildPlanRequest` still sent the photo's JPEG, which is the *blank* outline drawing. Gemma had to guess which color region was which object, and titled the red step (the pot) "Flower Petals" and the yellow one (petals, sun, pot band) "Flower Center".
+- **Fix:** `applyColoring` renders the colored-in drawing and stores it as `session.planImage` (cleared on a new photo or palette), and `buildPlanRequest` sends it in place of the photo. There's a new test. Web tests: 132.
+- **Re-run on the sunflower:** sky, base, stem, sun and cloud were all named correctly, but the red pot was still called "the flower". That's a model labeling error; the recipes are unaffected. The post says so.
+- **Demo GIF (`docs/images/demo.gif`, 1.05 MB, about 28 s, 450 px wide):** 13 frames captured at phone size from one live run (Home → Subject → Session → Paints → Color it in → Suggest colors with Gemma, 8.9 s → corrections → plan, 8.6 s → step 1), assembled with ffmpeg (palettegen/paletteuse). A ring marks each tap.
+- **User's own Suggest colors result** on their portrait coloring page (a later run): face warm brown, curls dark brown, hand brown, cap blue, heart pink, background blue and red. It's described in the post in text only, because the drawing isn't the user's own design.

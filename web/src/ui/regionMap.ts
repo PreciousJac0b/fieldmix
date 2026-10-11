@@ -28,6 +28,7 @@ export async function computeRegions(s: Session): Promise<void> {
   s.working = new Map(results.map((r) => [Number(r.target_id), r.options[0]?.parts ?? []]))
   s.plan = null
   s.coloring = null // palette or photo changed; old color choices no longer apply
+  s.planImage = null
 }
 
 function recipeBlock(s: Session, recipe: Recipe): HTMLElement {
