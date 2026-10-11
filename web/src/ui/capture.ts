@@ -46,6 +46,7 @@ export function renderCapture(s: Session, onNext: () => void, onBack: () => void
     try {
       s.photo = await loadPhoto(file)
       s.regions = null // force a fresh region map
+      s.coloring = null
       status.textContent = ''
       next.disabled = false
       showPreview()

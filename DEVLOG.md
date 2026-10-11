@@ -210,3 +210,34 @@ Tests: web 87/87, server 92/92.
 - **Diagnosis** (measured on the user's image): it is 100% neutral, with all 5 regions at chroma 0. The page (92% of the picture) correctly matches 1 part Titanium White, whose preset `#f4f3ee` (Lab 95.8, −0.5, 2.5) is a warm off-white; that's the cream tint. The lines get grey mixes. So the preview faithfully reproduced a photo with no colors in it. By design, Fieldmix never invents colors.
 - **Fix:** when the photo is line art (`isLineArt`, now shared by both tabs), Before / after starts with a note explaining that there are no colors to preview, why the page looks cream, and that for a sip-and-paint outline canvas you should photograph the host's finished sample painting.
 - **Possible next feature, not built:** "Color it in" for outline canvases. Tap a shape, choose one of your paints or mixes, and the preview fills it.
+
+### 2026-10-11 — "Color it in" for outline canvases (user request)
+
+- **Why:** a sip-and-paint outline canvas has no colors to mix, so the before/after preview stayed blank. Rather than invent colors (the color engine never does), the painter chooses them.
+- **Built:**
+  - `color/coloring.ts` (pure, 6 tests):
+    - outline = pixels darker than L* 60;
+    - the outline is thickened by a gap-closing radius so breaks in the strokes don't leak;
+    - every 4-connected non-outline area is a fillable shape;
+    - a tap on a line snaps to the nearest shape;
+    - rendering fills the thickened margin from the neighboring fill, so there's no white halo;
+    - `regionsFromColoring` turns the choices into planner regions: one per chosen color, with the outline and unpainted areas left unlabeled.
+  - `ui/colorIn.ts`:
+    - your paints as chips, plus "As is / Lighter / Pale" (0, 1 or 3 parts of your white, mixed with spectral.js);
+    - tap to fill, Undo, Clear;
+    - "Close gaps: Less / Normal / More";
+    - "Your colors" with exact recipes;
+    - **Paint with these colors**, which replaces the session's regions and recipes with the chosen colors (ΔE 0, since they're the painter's own choices) and runs the normal planner (Gemma, or the offline fallback).
+  - Line-art photos now show a "Color it in" tab (instead of Before / after) and a "Color it in" button in the color-map note.
+- **Tuning the gap closing on the user's coloring page** (a portrait with open hair strokes; measured with a probe script):
+  - at 1–4 px the face, hair and background were one shape (27.9% of the picture);
+  - at 5 px the face (7.8%) separates while the cap stays its own shape;
+  - from 6 px thin shapes start disappearing into the outline.
+  So the default is 5, with Less = 3 and More = 7. The first test image was a crop of a screenshot where the old region overlay had broken the lines into dashes, which exaggerated the leaks; a cleaner crop was used for tuning.
+- **Limit, stated in the UI:** strokes that are open in the drawing itself (the hair curls here) aren't enclosed shapes, so they fill together with the background. If color spills, Undo and choose More.
+- **Checked in Chrome at phone size, end to end:**
+  - colored the cap (Cadmium Red Hue), the face (Burnt Sienna + 1 Titanium White) and the background;
+  - "Paint with these colors" → a Gemma plan in 11.5 s, step 1 "Start with the darkest hat area", recipe "1 part Cadmium Red Hue";
+  - Exit → the color map shows the 3 colored regions, and the fills are kept.
+- **Fixed on the way:** the wake-lock fallback's `video.play()` promise was rejected without a handler when paint mode ended quickly. It's now caught.
+- Web tests: 114/114.

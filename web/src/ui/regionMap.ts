@@ -25,6 +25,7 @@ export async function computeRegions(s: Session): Promise<void> {
   s.recipes = results
   s.working = new Map(results.map((r) => [Number(r.target_id), r.options[0]?.parts ?? []]))
   s.plan = null
+  s.coloring = null // palette or photo changed; old color choices no longer apply
 }
 
 function recipeBlock(s: Session, recipe: Recipe): HTMLElement {
@@ -138,13 +139,13 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
 
   const tabs = h('div', { class: 'choices', role: 'tablist' })
   const mapTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', 'aria-controls': 'panel-map' }, 'Color map')
-  const compareTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-controls': 'panel-compare' }, 'Before / after')
+  const compareTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-controls': 'panel-compare' }, lineArt || s.coloring ? 'Color it in' : 'Before / after')
   const select = (which: 'map' | 'compare') => {
     mapTab.setAttribute('aria-selected', String(which === 'map'))
     compareTab.setAttribute('aria-selected', String(which === 'compare'))
     mapPanel.classList.toggle('hidden', which !== 'map')
     comparePanel.classList.toggle('hidden', which !== 'compare')
-    if (which === 'compare') comparePanel.replaceChildren(renderCompare(s))
+    if (which === 'compare') comparePanel.replaceChildren(renderCompare(s, onPlan))
   }
   mapTab.addEventListener('click', () => select('map'))
   compareTab.addEventListener('click', () => select('compare'))
@@ -157,8 +158,8 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
           'div',
           { class: 'card', role: 'note' },
           h('strong', {}, 'This picture is almost all black, white and grey.'),
-          h('p', {}, 'It looks like an outline drawing or a blank canvas, so there are no colors to mix yet. At a paint-and-sip event, photograph the host\'s finished sample painting instead.'),
-          h('button', { type: 'button', onclick: onRetake }, 'Take a different photo'),
+          h('p', {}, 'It looks like an outline drawing or a blank canvas, so there are no colors to mix yet. Color it in with your own paints, or photograph the host\'s finished sample painting instead.'),
+          h('div', { class: 'row' }, h('button', { type: 'button', class: 'primary', onclick: () => select('compare') }, 'Color it in'), h('button', { type: 'button', onclick: onRetake }, 'Take a different photo')),
         )
       : '',
     tabs,

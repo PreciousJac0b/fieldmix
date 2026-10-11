@@ -46,7 +46,9 @@ function startVideo(): boolean {
     video.srcObject = canvas.captureStream(1)
     video.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;bottom:0;left:0'
     document.body.append(video)
-    void video.play()
+    video.play().catch(() => {
+      /* interrupted when paint mode ends quickly; nothing to do */
+    })
     return true
   } catch {
     return false

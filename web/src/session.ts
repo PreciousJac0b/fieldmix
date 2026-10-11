@@ -7,6 +7,7 @@ import type { Medium, Mode, PlanRequest, PlanResponse, Step } from './api.ts'
 import type { Paint } from './color/paints.ts'
 import type { RecipePart, TargetRecipes } from './color/recipes.ts'
 import type { RegionResult } from './color/regions.ts'
+import type { ColorChoice } from './color/coloring.ts'
 
 export interface Setup {
   mode: Mode
@@ -23,6 +24,19 @@ export interface Photo {
   jpeg768: string
 }
 
+/** "Color it in" state for outline drawings. */
+export interface ColoringState {
+  /** Shape id → chosen color key. */
+  fills: Map<number, string>
+  choices: Map<string, ColorChoice>
+  history: { shape: number; prev?: string }[]
+  paintId: string
+  /** Parts of white per part of paint: 0 (as is), 1 (lighter), 3 (pale). */
+  lighten: 0 | 1 | 3
+  /** Outline gap closing in px (larger stops more spills, but swallows tiny shapes). */
+  gap: number
+}
+
 export interface Session {
   setup: Setup
   palette: Paint[]
@@ -35,6 +49,7 @@ export interface Session {
   /** True when the plan came from the in-browser fallback because the backend was unreachable. */
   offline: boolean
   stepIndex: number
+  coloring: ColoringState | null
 }
 
 export function newSession(): Session {
@@ -48,6 +63,7 @@ export function newSession(): Session {
     plan: null,
     offline: false,
     stepIndex: 0,
+    coloring: null,
   }
 }
 
