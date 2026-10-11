@@ -347,3 +347,13 @@ Tests: web 87/87, server 92/92.
 - **Tests:** web 130 (+4 router), server 101.
 
 - **Follow-up (user request):** outline drawings now open the Colors page on **Color it in**, with **Color map** as the second tab. A coloring already in progress does too. Colored photos still open on the color map (Color it in isn't offered for them). The "almost all black, white and grey" note moved into the Color map tab, where the grey map needs explaining.
+
+### 2026-10-11 — Write-up: README, eval results, post draft
+
+- **`eval/results.md`:** both halves, run today.
+  - Color (`scripts/eval.ts`, 3 stand-in landscapes, 17 regions each palette): student set 94% under ΔE 10 (median 2.55); primaries + white + black 100% (2.67); 4-paint set 82% (4.40); 1–16 ms per photo.
+  - Model (`scripts/eval.py`, 6 requests × 3 runs): 18/18 valid on the first try, 0 fallbacks, p50 6.6 s, p95 9.5 s.
+  - The stand-ins are macOS wallpapers, so they aren't committed; the file says so and how to re-run with real photos.
+- **`README.md`:** what it is; 5-minute setup; field setup on a phone hotspot; the Chrome insecure-origin flag; what works offline in each setup (the hosted demo is marked not built); the measured numbers; why open; credits. A grep confirmed the app requests no external URLs (no fonts, CDNs or cloud APIs), which the field-setup note relies on.
+- **Post draft (`docs/dev-post.md`, not committed until published):** follows DEV's submission template. Placeholders are left for what only the author can say (motivation, field test, demo video, agent session).
+- **Screenshots (`docs/images/`):** captured at phone size and combined into side-by-side pairs, plus a 1000 × 420 cover. They use a test landscape drawn in code (`docs/images/demo-landscape.jpg`), because neither the Apple wallpapers nor the outline-canvas product photos can be published. The plan in them is Gemma's real output for that image (7 steps, 13.9 s).
