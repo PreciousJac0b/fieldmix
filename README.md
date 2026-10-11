@@ -82,11 +82,14 @@ fresh visit needs the laptop.
 
 ## Measured
 
-From `scripts/eval.ts` and `scripts/eval.py` (details in [eval/results.md](eval/results.md)).
-The test scenes were **stand-ins** (macOS landscape wallpapers), not field photos.
+From `scripts/eval.ts` and `scripts/eval.py` (details in [eval/results.md](eval/results.md)),
+on three phone photos in [`fixtures/scenes/`](fixtures/scenes): a park, a street and a lagoon waterfront.
 
-- Recipes under ΔE 10: **94%** of regions with a 6-color student set + white (median ΔE 2.55), **100%** with 3 primaries + white + black (median 2.67), **82%** with a 4-paint set (median 4.40).
-- Gemma plans: **18/18 valid** on the first try, median **6.6 s**, p95 9.5 s (local `gemma4:e4b`, thinking off).
+- Recipes under ΔE 10:
+  - **100%** of regions with a 6-color student set + white (median ΔE 2.68);
+  - **100%** with 3 primaries + white + black (median 3.21);
+  - **82%** with a 4-paint set (median 5.15). Without a black it can't reach the deepest shadows.
+- Gemma plans: **18/18 valid** on the first try, median **7.0 s**, p95 13.1 s. The slowest one includes loading the model (local `gemma4:e4b`, thinking off).
 
 ## Why open
 
