@@ -241,3 +241,20 @@ Tests: web 87/87, server 92/92.
   - Exit → the color map shows the 3 colored regions, and the fills are kept.
 - **Fixed on the way:** the wake-lock fallback's `video.play()` promise was rejected without a handler when paint mode ended quickly. It's now caught.
 - Web tests: 114/114.
+
+### 2026-10-11 — Simpler recipes (user approved)
+
+- **Problem:** the most accurate recipe was often 4 paints and up to 16 parts (the coastline sea was 6 Ultramarine + 5 White + 3 Phthalo + 2 Cadmium Red at ΔE 1.0). Nobody mixes that at an easel for a difference they can't see.
+- **Rule:** among recipes within ΔE00 2 of the most accurate, take the fewest paints, then the fewest total parts. The tolerance is also capped at the quality-label boundaries (Good < 5, OK ≤ 10), so simplifying never downgrades the label a painter sees.
+- **Search change:** the CIE76 shortlist is now kept per recipe size (1, 2, 3 and 4 paints, 48 each), so simple recipes can't be crowded out of the shortlist by complex near-perfect ones.
+- **Tests:** a brute-force check over every candidate for 6 colors (nothing within the limit is strictly simpler than the chosen recipe), the label-boundary cap, and the sea case. Web tests: 116/116.
+- **Measured on the 3 stand-in landscapes** (student palette, 17 regions), before → after:
+
+  | | Before | After |
+  | --- | --- | --- |
+  | Average parts per recipe | 12.4 | 6.8 |
+  | Average paints | 3.65 | 2.94 |
+  | Mean ΔE | 2.37 | 3.52 |
+  | Regions under ΔE 10 | 16/17 | 16/17 |
+
+  The coastline sea is now 2 Phthalo + 2 White + 1 Alizarin (ΔE 1.9). An uncapped first version dropped one region from "OK" to "Closest possible", which is why the cap was added.

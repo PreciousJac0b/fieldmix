@@ -9,6 +9,8 @@ import {
   prunePalette,
   solveTarget,
   solveTargets,
+  SIMPLICITY_TOLERANCE,
+  simplicityLimit,
   type RecipePart,
 } from '../src/color/recipes.ts'
 
@@ -69,21 +71,21 @@ describe('buildCandidates', () => {
 })
 
 describe('matchTarget / solveTarget', () => {
-  it('recovers a color that is exactly one of its own recipes (ΔE ≈ 0)', () => {
-    const target = mixOf(student, [
+  it('a color that is exactly one of its own recipes gets a recipe within ΔE 2, no more complex', () => {
+    const exact = [
       { paint_id: 'ultramarine', parts: 2 },
       { paint_id: 'cad-yellow-light', parts: 3 },
       { paint_id: 'titanium-white', parts: 1 },
-    ])
-    const [best] = solveTarget(student, target)
-    expect(best.delta_e).toBeLessThan(0.05)
+    ]
+    const [best] = solveTarget(student, mixOf(student, exact))
+    expect(best.delta_e).toBeLessThanOrEqual(SIMPLICITY_TOLERANCE)
+    expect(best.parts.length).toBeLessThanOrEqual(exact.length)
   })
 
-  it('returns 2 options, best first, with result hex/lab consistent with the recipe', () => {
+  it('returns 2 options whose result hex/lab and ΔE are consistent with their recipes', () => {
     const target = hexToLab('#6b8f4e') // a mid foliage green
     const options = solveTarget(student, target)
     expect(options).toHaveLength(2)
-    expect(options[0].delta_e).toBeLessThanOrEqual(options[1].delta_e)
     for (const o of options) {
       const lab = mixOf(student, o.parts)
       expect(deltaE2000(lab, o.result_lab)).toBeLessThan(0.01)
@@ -112,16 +114,54 @@ describe('matchTarget / solveTarget', () => {
     expect(ok.closest_possible).toBe(false)
   })
 
-  it('matchTarget prefers the CIEDE2000 winner among prefiltered candidates', () => {
-    const set = buildCandidates([STUDENT_SET[0], STUDENT_SET[3], TITANIUM_WHITE])
-    const target = hexToLab('#5a8a6a')
-    const [best] = matchTarget(set, target, 1)
-    // Brute-force CIEDE2000 over every candidate.
-    let bruteBest = Infinity
-    for (let c = 0; c < set.count; c++) {
-      bruteBest = Math.min(bruteBest, deltaE2000(target, [set.labs[c * 3], set.labs[c * 3 + 1], set.labs[c * 3 + 2]]))
+  it('picks the simplest recipe within ΔE 2 of the most accurate (checked by brute force)', () => {
+    const set = buildCandidates(student)
+    const complexity = (code: number) => {
+      let comps = 0
+      let parts = 0
+      for (let j = 0; j < 4; j++) {
+        const p = (code >>> (8 * j)) & 7
+        if (p) {
+          comps++
+          parts += p
+        }
+      }
+      return [comps, parts]
     }
-    expect(best.delta_e).toBeCloseTo(bruteBest, 1)
+    for (const hex of ['#5a8a6a', '#7f9fc4', '#c9b38a', '#5b3a29', '#b5562f', '#d8c7c0']) {
+      const target = hexToLab(hex)
+      const [chosen] = matchTarget(set, target, 1)
+      const all = Array.from({ length: set.count }, (_, c) => ({
+        de: deltaE2000(target, [set.labs[c * 3], set.labs[c * 3 + 1], set.labs[c * 3 + 2]]),
+        cx: complexity(set.codes[c]),
+      }))
+      const bestDe = Math.min(...all.map((a) => a.de))
+      const limit = simplicityLimit(bestDe)
+      expect(chosen.delta_e).toBeLessThanOrEqual(limit + 0.01)
+      const chosenCx = [chosen.parts.length, chosen.parts.reduce((t, p) => t + p.parts, 0)]
+      const strictlySimpler = all.filter(
+        (a) => a.de <= limit && (a.cx[0] < chosenCx[0] || (a.cx[0] === chosenCx[0] && a.cx[1] < chosenCx[1])),
+      )
+      expect(strictlySimpler, hex).toHaveLength(0)
+    }
+  })
+
+  it('turns a 4-paint, 16-part sea mix into something simpler', () => {
+    // The coastline sea used to come out as 6 Phthalo + 6 White + 3 Alizarin + 1 Burnt Sienna.
+    const [sea] = solveTarget(student, hexToLab('#7290b4'))
+    const totalParts = sea.parts.reduce((t, p) => t + p.parts, 0)
+    expect(sea.parts.length <= 3 || totalParts <= 8).toBe(true)
+    expect(sea.delta_e).toBeLessThan(5)
+  })
+})
+
+describe('simplicityLimit', () => {
+  it('allows ΔE 2 more, but never crosses into a worse quality label', () => {
+    expect(simplicityLimit(1)).toBe(3)
+    expect(simplicityLimit(4)).toBeLessThan(5) // stays "Good"
+    expect(simplicityLimit(6)).toBe(8)
+    expect(simplicityLimit(9)).toBe(10) // stays "OK"
+    expect(simplicityLimit(12)).toBe(14) // already "Closest possible"
   })
 })
 

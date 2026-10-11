@@ -163,43 +163,84 @@ function paintSetKey(code: number): number {
 }
 
 /**
- * Best `n` recipes for one target from a candidate set. The second option uses a
- * different set of paints when one exists, so "I don't have that color" has an answer.
+ * A painter would rather mix 2 paints than 4 for a difference they can't see, so among
+ * recipes within this ΔE00 of the most accurate one, the simplest wins (fewest paints,
+ * then fewest total parts). About 2 ΔE00 is near the limit of what is visible side by side.
+ */
+export const SIMPLICITY_TOLERANCE = 2
+
+/**
+ * Largest ΔE00 a simpler recipe may have, given the most accurate one: best + tolerance,
+ * but never crossing into a worse quality label (Good < 5, OK ≤ 10, Closest possible).
+ */
+export function simplicityLimit(bestDeltaE: number): number {
+  const cap = bestDeltaE < 5 ? 5 - 1e-9 : bestDeltaE <= CLOSEST_POSSIBLE_DE ? CLOSEST_POSSIBLE_DE : Infinity
+  return Math.min(bestDeltaE + SIMPLICITY_TOLERANCE, cap)
+}
+
+function complexity(code: number): { components: number; parts: number } {
+  let components = 0
+  let parts = 0
+  for (let j = 0; j < MAX_COMPONENTS; j++) {
+    const n = (code >>> (8 * j)) & 7
+    if (n) {
+      components++
+      parts += n
+    }
+  }
+  return { components, parts }
+}
+
+/**
+ * Best `n` recipes for one target from a candidate set: the simplest recipe within
+ * SIMPLICITY_TOLERANCE of the most accurate one. The second option uses a different set
+ * of paints when one exists, so "I don't have that color" has an answer.
  */
 export function matchTarget(set: CandidateSet, target: Lab, n = 2): Recipe[] {
-  const { labs, count } = set
-  // Keep the PREFILTER nearest by squared CIE76 (insertion into a small sorted list).
-  const topD = new Float64Array(PREFILTER).fill(Infinity)
-  const topI = new Int32Array(PREFILTER).fill(-1)
+  const { labs, count, codes } = set
+  // Keep the PREFILTER nearest (squared CIE76) separately for 1-, 2-, 3- and 4-paint
+  // recipes, so simple recipes are never crowded out by complex near-perfect ones.
+  const topD = Array.from({ length: MAX_COMPONENTS + 1 }, () => new Float64Array(PREFILTER).fill(Infinity))
+  const topI = Array.from({ length: MAX_COMPONENTS + 1 }, () => new Int32Array(PREFILTER).fill(-1))
   const [tl, ta, tb] = target
   for (let c = 0; c < count; c++) {
     const dl = labs[c * 3] - tl
     const da = labs[c * 3 + 1] - ta
     const db = labs[c * 3 + 2] - tb
     const d = dl * dl + da * da + db * db
-    if (d >= topD[PREFILTER - 1]) continue
+    const comp = complexity(codes[c]).components
+    const D = topD[comp]
+    const I = topI[comp]
+    if (d >= D[PREFILTER - 1]) continue
     let k = PREFILTER - 1
-    while (k > 0 && topD[k - 1] > d) {
-      topD[k] = topD[k - 1]
-      topI[k] = topI[k - 1]
+    while (k > 0 && D[k - 1] > d) {
+      D[k] = D[k - 1]
+      I[k] = I[k - 1]
       k--
     }
-    topD[k] = d
-    topI[k] = c
+    D[k] = d
+    I[k] = c
   }
-  const ranked = Array.from(topI)
+  const ranked = topI
+    .flatMap((I) => Array.from(I))
     .filter((c) => c >= 0)
     .map((c) => {
       const lab: Lab = [labs[c * 3], labs[c * 3 + 1], labs[c * 3 + 2]]
-      return { c, lab, de: deltaE2000(target, lab) }
+      return { c, lab, de: deltaE2000(target, lab), ...complexity(codes[c]) }
     })
     .sort((a, b) => a.de - b.de)
+  if (!ranked.length) return []
+
+  const limit = simplicityLimit(ranked[0].de)
+  const simplest = ranked
+    .filter((r) => r.de <= limit)
+    .sort((a, b) => a.components - b.components || a.parts - b.parts || a.de - b.de)
 
   const chosen: typeof ranked = []
   const usedSets = new Set<number>()
-  for (const r of ranked) {
+  for (const r of [...simplest, ...ranked]) {
     if (chosen.length >= n) break
-    const key = paintSetKey(set.codes[r.c])
+    const key = paintSetKey(codes[r.c])
     if (usedSets.has(key)) continue
     usedSets.add(key)
     chosen.push(r)
