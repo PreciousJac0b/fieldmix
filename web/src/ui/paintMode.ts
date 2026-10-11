@@ -4,11 +4,11 @@
  * supplies titles, instructions and tips.
  */
 
-import { ask } from '../api.ts'
+import { ask, type Step } from '../api.ts'
 import { resolveTestDab, type DabFeedback } from '../color/adjust.ts'
 import { mixPaints } from '../color/mix.ts'
 import { quality, recipeDots, recipeText, regionLabel, spokenStep, type Session } from '../session.ts'
-import { speak, speechAvailable, stopSpeaking, unlock } from '../speech.ts'
+import { getSpeaker, speak, speechAvailable, stopSpeaking, unlock, type SpeechState } from '../speech.ts'
 import { loadPhoto } from './capture.ts'
 import { chip, h, mount } from './dom.ts'
 import { allowSleep, keepAwake } from './wakeLock.ts'
@@ -113,6 +113,35 @@ function askPanel(s: Session, stepOrder: number): HTMLElement {
   return panel
 }
 
+const PAUSE_LABELS: Record<SpeechState, [string, string]> = {
+  speaking: ['⏸ Pause', 'Pause the spoken step'],
+  paused: ['▶ Resume', 'Resume the spoken step'],
+  idle: ['🔊 Play', 'Play this step aloud'],
+}
+
+let unsubscribePause: (() => void) | null = null
+
+/** Pause/Resume for the spoken step; when nothing is playing it replays the step. */
+function pauseButton(s: Session, step: Step): HTMLButtonElement | null {
+  const speaker = getSpeaker()
+  if (!speaker) return null
+  const b = h('button', { type: 'button', class: 'pause' })
+  const render = (state: SpeechState) => {
+    const [label, aria] = PAUSE_LABELS[state]
+    b.textContent = label
+    b.setAttribute('aria-label', aria)
+    b.setAttribute('aria-pressed', String(state === 'paused'))
+  }
+  b.addEventListener('click', () => {
+    if (speaker.current === 'idle') speaker.speak(spokenStep(s, step))
+    else speaker.toggle()
+  })
+  unsubscribePause?.()
+  unsubscribePause = speaker.onChange(render)
+  render(speaker.current)
+  return b
+}
+
 function stepScreen(s: Session, onExit: () => void): HTMLElement {
   const plan = s.plan!
   const step = plan.steps[s.stepIndex]
@@ -151,6 +180,7 @@ function stepScreen(s: Session, onExit: () => void): HTMLElement {
       'div',
       { class: 'nav' },
       h('button', { type: 'button', disabled: s.stepIndex === 0, onclick: () => go(-1) }, '◀ Back'),
+      pauseButton(s, step),
       h('button', { type: 'button', class: 'primary', onclick: () => go(1) }, s.stepIndex === total - 1 ? 'Finish' : 'Next ▶'),
     ),
   )

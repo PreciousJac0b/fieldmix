@@ -163,3 +163,11 @@ Tests: web 87/87, server 92/92.
 **Open observations:**
 1. Recipes are accurate (ΔE 0.4–0.9) but often use 4 paints and up to 16 parts. Painters would probably prefer a 2-paint mix at ΔE 3.
 2. The fallback's color-only labels can be wrong (a blue-grey rock labeled "sky"). Gemma labels from the image when the laptop is reachable.
+
+### 2026-10-11 — Pause/Resume for spoken steps (user request)
+
+- **What it does:** a **⏸ Pause / ▶ Resume** button sits in paint mode's fixed bar between Back and Next, where it's easy to hit with a paint-covered finger. When nothing is playing it shows **🔊 Play**, which replays the step. The label and `aria-pressed` follow the speech state.
+- **Why not `speechSynthesis.pause()`:** it is unreliable on Android Chrome, where it often stops for good. Instead `speech.ts` speaks the step as a queue of sentences. Pause cancels and remembers the sentence that was playing; Resume restarts from the beginning of that sentence. A generation counter ignores the error events Chrome fires for its own cancellations.
+- **The same speaker handles everything spoken:** steps, test-dab messages and Ask answers can all be paused.
+- **Tests:** 9 unit tests with a fake speech engine (sentence splitting; pause/resume mid-sentence; nothing skipped; toggle; new text while paused; stop; pause during the last sentence). Web tests now 96/96.
+- **Checked in Chrome with the real engine:** Pause → the engine goes silent and stays silent; Resume → speaking again; Next or Back while paused starts the new step fresh; after speech finishes the button shows Play, and tapping it speaks again.

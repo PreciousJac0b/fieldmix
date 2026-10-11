@@ -73,7 +73,9 @@ label.check input { width: 28px; height: 28px; }
 .paint .instruction { font-size: 24px; }
 .paint .tip { font-size: 20px; border-left: 6px solid #000; padding-left: 12px; }
 .paint .nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: #fff; border-top: 3px solid #000; z-index: 10; }
-.paint .nav button { flex: 1; min-height: 72px; font-size: 24px; }
+.paint .nav button { flex: 1; min-height: 72px; font-size: 22px; padding: 6px 8px; white-space: nowrap; }
+.paint .nav button.pause { flex: 1.1; }
+.paint .nav button.pause[aria-pressed='true'] { background: #000; color: #fff; }
 .dab { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .dab button { min-height: 64px; font-size: 20px; }
 .dab button.wide { grid-column: span 2; }
