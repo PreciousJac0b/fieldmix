@@ -11,6 +11,8 @@ import { solveInWorker } from '../color/solver.ts'
 import { quality, recipeDots, recipeText, regionLabel, type Session } from '../session.ts'
 import { renderCompare } from './compare.ts'
 import { chip, h } from './dom.ts'
+import { icon } from './icons.ts'
+import { actionBar, pageTitle } from './layout.ts'
 
 const LONG_PRESS_MS = 500
 
@@ -53,7 +55,7 @@ function regionCard(s: Session, id: number): HTMLElement {
     h('div', { class: 'row' }, h('span', { class: 'num' }, String(id)), h('strong', {}, regionLabel(s.plan, id)), h('span', { class: 'spacer' }), h('span', { class: 'muted' }, `${region.area_pct}% of picture`)),
     h('div', { class: 'row', style: 'margin:8px 0' }, chip(region.hex, 'target'), h('span', {}, '→'), chip(best.result_hex, 'your mix'), h('span', { class: 'muted' }, 'target → your mix')),
     recipeBlock(s, best),
-    ...tips.map((t) => h('p', {}, '💡 ', t.message)),
+    ...tips.map((t) => h('p', { class: 'tip-line' }, icon('sparkles', 20), h('span', {}, t.message))),
     other,
   )
 }
@@ -97,7 +99,8 @@ function attachLongPress(s: Session, canvas: HTMLCanvasElement, host: HTMLElemen
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) canvas.addEventListener(ev, cancel)
 }
 
-export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack: () => void, onRetake: () => void = onBack): HTMLElement {
+/** The Colors page content (main.ts wraps it in the page frame). */
+export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onRetake: () => void): HTMLElement {
   const root = h('div')
   const photo = s.photo!
   const regions = s.regions!
@@ -109,7 +112,7 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
   drawOverlay(overlay.getContext('2d')!, regions)
   attachLongPress(s, overlay, root)
 
-  const planBtn = h('button', { type: 'button', class: 'primary big full' }, 'Make my painting plan')
+  const planBtn = h('button', { type: 'button', class: 'primary big grow' }, icon('brush', 28), 'Make my painting plan')
   const status = h('p', { class: 'muted' })
   planBtn.addEventListener('click', async () => {
     planBtn.disabled = true
@@ -128,7 +131,7 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
   const mapPanel = h(
     'div',
     { role: 'tabpanel', id: 'panel-map' },
-    h('p', { class: 'muted' }, 'Each number is one color to mix. Long-press anywhere on the picture to get a mix for that exact spot.'),
+    h('p', { class: 'muted tip-line' }, icon('eyedropper', 20), h('span', {}, 'Each number is one color to mix. Long-press anywhere on the picture to get a mix for that exact spot.')),
     h('div', { class: 'stage' }, base, overlay),
     closest ? h('p', {}, `${closest} region${closest > 1 ? 's are' : ' is'} hard to match with these paints, so ${closest > 1 ? 'they are' : 'it is'} marked "Closest possible".`) : '',
     h('p', { class: 'muted' }, 'Mixes are starting points: real paint, brands, and the light in your photo all shift the result. Always test a small dab first.'),
@@ -137,14 +140,23 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
   // Built when first opened (and rebuilt each time, so it reflects test-dab changes).
   const comparePanel = h('div', { role: 'tabpanel', id: 'panel-compare', class: 'hidden' })
 
-  const tabs = h('div', { class: 'choices', role: 'tablist' })
-  const mapTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', 'aria-controls': 'panel-map' }, 'Color map')
-  const compareTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-controls': 'panel-compare' }, lineArt || s.coloring ? 'Color it in' : 'Before / after')
+  // Color it in has its own "Paint with these colors" button, so the plan bar hides there.
+  const colorIn = lineArt || !!s.coloring
+  const planBar = actionBar(planBtn)
+  const tabs = h('div', { class: 'choices tabs', role: 'tablist' })
+  const mapTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', 'aria-controls': 'panel-map' }, icon('map'), 'Color map')
+  const compareTab = h(
+    'button',
+    { type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-controls': 'panel-compare' },
+    colorIn ? icon('brush') : icon('compare'),
+    colorIn ? 'Color it in' : 'Before / after',
+  )
   const select = (which: 'map' | 'compare') => {
     mapTab.setAttribute('aria-selected', String(which === 'map'))
     compareTab.setAttribute('aria-selected', String(which === 'compare'))
     mapPanel.classList.toggle('hidden', which !== 'map')
     comparePanel.classList.toggle('hidden', which !== 'compare')
+    planBar.classList.toggle('hidden', which === 'compare' && colorIn)
     if (which === 'compare') comparePanel.replaceChildren(renderCompare(s, onPlan))
   }
   mapTab.addEventListener('click', () => select('map'))
@@ -152,22 +164,21 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
   tabs.append(mapTab, compareTab)
 
   root.append(
-    h('h1', {}, 'Your color map'),
+    pageTitle('palette', 'Your colors', 'var(--tint-green)'),
     lineArt
       ? h(
           'div',
           { class: 'card', role: 'note' },
           h('strong', {}, 'This picture is almost all black, white and grey.'),
           h('p', {}, 'It looks like an outline drawing or a blank canvas, so there are no colors to mix yet. Color it in with your own paints, or photograph the host\'s finished sample painting instead.'),
-          h('div', { class: 'row' }, h('button', { type: 'button', class: 'primary', onclick: () => select('compare') }, 'Color it in'), h('button', { type: 'button', onclick: onRetake }, 'Take a different photo')),
+          h('div', { class: 'row' }, h('button', { type: 'button', class: 'primary', onclick: () => select('compare') }, icon('brush'), 'Color it in'), h('button', { type: 'button', onclick: onRetake }, icon('retake'), 'Take a different photo')),
         )
       : '',
     tabs,
     mapPanel,
     comparePanel,
-    h('div', { class: 'row' }, h('button', { type: 'button', onclick: onBack }, 'Back')),
     status,
-    planBtn,
+    planBar,
   )
   return root
 }

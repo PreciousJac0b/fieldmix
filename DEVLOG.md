@@ -318,3 +318,31 @@ Tests: web 87/87, server 92/92.
   - suggestion card and Your colors: number, swatch and name on one line, the reason or recipe below at full width (they were squeezed into a narrow third column);
   - the Before / after slider lost its default 2 px side margins, which made it 4 px wider than the screen.
 - **Checked** in the browser at 300, 375 and 412 px wide: no element wider than its box and no sideways page scroll.
+
+### 2026-10-11 — Pages, icons and a friendlier flow (user request)
+
+- **Asked for:** split the app into pages with icons: a home page with an intro and "Let's go", then scene or reference painting, then time, kind of paint and the photo, then an appealing way to pick colors.
+- **The flow now:** Home → Subject → Session → Paints → Colors → Plan → Paint.
+  - **Home:** an illustration (an easel with a landscape in progress, a palette, a brush, floating paint drops); "Paint what you see, with the paints you have"; three how-it-works cards (Snap, Mix, Paint); plain facts (color mixing runs on this phone, Gemma runs on your laptop, open source); and a live status line that checks whether Gemma is reachable and says what happens if it isn't.
+  - **Subject:** two illustrated cards. Tapping one moves on.
+  - **Session:** time as clock pies (half, full, one and a half); the kind of paint as tiles with a tube, a drop, a flask and a jar; the number of colors under "More options", with a row of swatches that grows with the slider. Take a photo and Gallery sit in a bar at the bottom of the screen.
+  - **Paints:** an artist's palette that fills with a blob of each paint you pick (blobs pop in); every preset drawn as a paint tube in its color; one-tap sets (Starter, Primaries + white & black, Everything, Clear); the photo you're mixing for, with Retake.
+  - **Colors, Plan, Paint:** icon tabs; the plan as a timeline with each step's colors; icons on the paint-mode buttons and a progress bar.
+  - **Loader:** blue and yellow blobs merge into green. The green comes from the same pigment model as the recipes, not a hand-picked color.
+- **Navigation:** each page has its own URL hash and a History API entry, so Android's back button moves between pages instead of closing the app and losing the session.
+  - In-page Back uses the browser's back when that leads to the expected page, so the two stay in step.
+  - Pages that need an earlier step (after a reload or a stale link) fall back to the latest page that can be shown. This logic is pure (`router.ts`) and unit-tested.
+  - Leaving paint mode by any route stops the voice and releases the screen wake lock.
+  - Colors aren't recomputed when you come back to the Colors page, unless the palette or the number of colors changed.
+- **Design choices:**
+  - Icons and illustrations are hand-drawn inline SVG: no icon library (no new dependency), nothing fetched, so it all works offline and stays MIT.
+  - The high-contrast black-on-white theme is kept for sunlight. Color comes from paint tints and a "sticker" style: a hard black shadow that presses in on tap.
+  - Animations switch off under `prefers-reduced-motion`.
+  - Unselected paint tubes are shown at full color. A faded version made Cadmium Red look salmon, which is wrong in an app about matching color.
+- **Bugs found while testing:**
+  - The region step runs on the main thread, so the loader never painted. It now yields a frame first and stays up at least 0.9 s instead of flashing.
+  - Colors and Color it in each showed a plan button at the same time. The outer one now hides on the Color it in tab.
+  - At 300 px, the 1½-hour clock pair was wider than its tile, the paint-mode nav was 346 px wide, and the photo strip squeezed its label to 41 px. Below 370 px the optional arrow icons and the Retake label hide.
+- **Checked** in the browser at 300, 360 and 375 px: every page, both subjects, Color it in, a live Gemma plan, paint mode to the done screen, browser back and forward. Nothing is wider than its box, and the page never scrolls sideways.
+- **Tests:** web 130 (+4 router), server 101.
+

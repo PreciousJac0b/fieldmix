@@ -27,6 +27,8 @@ import { hexToRgb8 } from '../color/preview.ts'
 import { classifyPalette } from '../color/recipes.ts'
 import { recipeText, type ColoringState, type Session } from '../session.ts'
 import { chip, h } from './dom.ts'
+import { icon, tube, type IconName } from './icons.ts'
+import { actionBar } from './layout.ts'
 
 const LIGHTEN: [0 | 1 | 3, string][] = [
   [0, 'As is'],
@@ -160,11 +162,11 @@ export function applyColoring(s: Session): void {
   s.plan = null
 }
 
-/** A segmented radio row. */
-function radioRow<T>(label: string, options: [T, string][], current: () => T, onPick: (v: T) => void): HTMLElement {
+/** A segmented radio row (optionally with an icon on each button). */
+function radioRow<T>(label: string, options: [T, string, IconName?][], current: () => T, onPick: (v: T) => void): HTMLElement {
   const row = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': label })
-  for (const [value, text] of options) {
-    const b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(value === current()) }, text)
+  for (const [value, text, iconName] of options) {
+    const b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(value === current()) }, iconName ? icon(iconName, 22) : null, text)
     b.addEventListener('click', () => {
       onPick(value)
       row.querySelectorAll('button').forEach((x) => x.setAttribute('aria-checked', String(x === b)))
@@ -183,12 +185,12 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
   const current = h('div', { class: 'row' })
   const used = h('div')
   const toolHint = h('p', { role: 'status' })
-  const paintBtn = h('button', { type: 'button', class: 'primary big full' }, 'Paint with these colors')
-  const undoBtn = h('button', { type: 'button' }, 'Undo')
-  const clearBtn = h('button', { type: 'button' }, 'Clear all')
+  const paintBtn = h('button', { type: 'button', class: 'primary big grow' }, icon('brush', 28), 'Paint with these colors')
+  const undoBtn = h('button', { type: 'button' }, icon('undo', 20), 'Undo')
+  const clearBtn = h('button', { type: 'button' }, icon('close', 20), 'Clear all')
   const status = h('p', { class: 'muted', role: 'status' })
 
-  const suggestBtn = h('button', { type: 'button', class: 'primary big full' }, '✨ Suggest colors')
+  const suggestBtn = h('button', { type: 'button', class: 'go big full' }, icon('sparkles', 28), 'Suggest colors')
   const suggestStatus = h('p', { class: 'muted', role: 'status' })
   const suggestCard = h('div')
   function renderSuggestionCard(): void {
@@ -391,8 +393,8 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
   const toolRow = radioRow<'fill' | 'outline'>(
     'Tool',
     [
-      ['fill', 'Fill'],
-      ['outline', 'Draw outline'],
+      ['fill', 'Fill', 'fill'],
+      ['outline', 'Draw outline', 'pencil'],
     ],
     () => st.tool,
     (v) => {
@@ -403,9 +405,9 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
 
   // Paint picker: your paints as chips, plus how much white to add. Picking a paint switches back to Fill.
   const { white } = classifyPalette(s.palette)
-  const picker = h('div', { class: 'choices', role: 'radiogroup', 'aria-label': 'Paint' })
+  const picker = h('div', { class: 'tube-grid', role: 'radiogroup', 'aria-label': 'Paint' })
   for (const p of s.palette) {
-    const b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(p.id === st.paintId), class: 'paint-pick' }, chip(p.hex, p.name), ' ', p.name)
+    const b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(p.id === st.paintId), class: 'tube-tile' }, tube(p.hex), h('span', {}, p.name), h('span', { class: 'tick', 'aria-hidden': 'true' }, icon('check', 16)))
     b.addEventListener('click', () => {
       st.paintId = p.id
       st.tool = 'fill'
@@ -448,6 +450,6 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
     used,
     h('p', { class: 'muted' }, 'Recipes are starting points: test a small dab first. Sketch your blue outlines lightly on the canvas in pencil before painting.'),
     status,
-    paintBtn,
+    actionBar(paintBtn),
   )
 }

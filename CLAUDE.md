@@ -153,8 +153,9 @@ fieldmix/
     index.html  dev.html
     src/color/   lab.ts  kmeans.ts  regions.ts  swatches.ts  mix.ts  recipes.ts  recipes.worker.ts  adjust.ts  paints.ts
     src/plan/    fallback.ts
-    src/ui/      setup.ts  capture.ts  palette.ts  regionMap.ts  paintMode.ts  settings.ts  wakeLock.ts
-    src/api.ts   src/main.ts
+    src/ui/      home.ts  mode.ts  setup.ts  capture.ts  palette.ts  regionMap.ts  compare.ts  colorIn.ts  paintMode.ts  settings.ts  wakeLock.ts
+                 layout.ts (page frame)  icons.ts (hand-drawn inline SVG)  dom.ts  image.ts
+    src/api.ts   src/main.ts  src/router.ts (pages, back targets, guards)  src/session.ts  src/speech.ts  src/store.ts
     tests/       (Vitest)
   server/
     requirements.txt
@@ -296,6 +297,7 @@ Only start a stretch goal once Phase 6 is done. Each is self-contained, so Claud
 
 ## Spec changelog
 
+- **2026-10-11:** UX redesign (user request): separate pages (Home → Subject → Session → Paints → Colors → Plan → Paint), each with its own URL hash so Android's back button moves between pages; hand-drawn inline SVG icons and illustrations (no icon library, nothing fetched); paint tubes and a live palette board for picking paints; the photo is taken on the Session page.
 - **2026-10-11:** "Color it in" for outline canvases, with painter-drawn outlines and "Suggest colors": Gemma picks one of the painter's paints (+ how much white) per numbered shape; code still does every mix. New endpoint `/api/suggest-colors`; the Ollama prompted-JSON hint is now generated from each response schema.
 - **2026-10-11:** Simpler recipes (user-approved): simplest within ΔE 2 of the most accurate, capped at quality-label boundaries; shortlists kept per recipe size so simple mixes aren't crowded out.
 - **2026-10-11:** Phase 2 findings: Ollama `format` unavailable on the Homebrew build (prompted-JSON fallback added); `think: false` adopted after measuring 17.9 s vs 6.2 s median plan latency; log module named `calllog.py` (not `logging.py`, which would read like the stdlib module); `eval.py` and `make_plan_request.ts` built early for the Phase 2 live run.
