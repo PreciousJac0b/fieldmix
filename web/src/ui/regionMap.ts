@@ -9,6 +9,7 @@ import type { Recipe } from '../color/recipes.ts'
 import { drawOverlay, extractRegions, neutralShare } from '../color/regions.ts'
 import { solveInWorker } from '../color/solver.ts'
 import { quality, recipeDots, recipeText, regionLabel, type Session } from '../session.ts'
+import { renderCompare } from './compare.ts'
 import { chip, h } from './dom.ts'
 
 const LONG_PRESS_MS = 500
@@ -125,6 +126,33 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
 
   const closest = s.recipes.filter((r) => r.closest_possible).length
   const lineArt = neutralShare(regions.regions) >= LINE_ART_SHARE
+
+  const mapPanel = h(
+    'div',
+    { role: 'tabpanel', id: 'panel-map' },
+    h('p', { class: 'muted' }, 'Each number is one color to mix. Long-press anywhere on the picture to get a mix for that exact spot.'),
+    h('div', { class: 'stage' }, base, overlay),
+    closest ? h('p', {}, `${closest} region${closest > 1 ? 's are' : ' is'} hard to match with these paints, so ${closest > 1 ? 'they are' : 'it is'} marked "Closest possible".`) : '',
+    h('p', { class: 'muted' }, 'Mixes are starting points: real paint, brands, and the light in your photo all shift the result. Always test a small dab first.'),
+    ...regions.regions.map((r) => regionCard(s, r.id)),
+  )
+  // Built when first opened (and rebuilt each time, so it reflects test-dab changes).
+  const comparePanel = h('div', { role: 'tabpanel', id: 'panel-compare', class: 'hidden' })
+
+  const tabs = h('div', { class: 'choices', role: 'tablist' })
+  const mapTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', 'aria-controls': 'panel-map' }, 'Color map')
+  const compareTab = h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-controls': 'panel-compare' }, 'Before / after')
+  const select = (which: 'map' | 'compare') => {
+    mapTab.setAttribute('aria-selected', String(which === 'map'))
+    compareTab.setAttribute('aria-selected', String(which === 'compare'))
+    mapPanel.classList.toggle('hidden', which !== 'map')
+    comparePanel.classList.toggle('hidden', which !== 'compare')
+    if (which === 'compare') comparePanel.replaceChildren(renderCompare(s))
+  }
+  mapTab.addEventListener('click', () => select('map'))
+  compareTab.addEventListener('click', () => select('compare'))
+  tabs.append(mapTab, compareTab)
+
   root.append(
     h('h1', {}, 'Your color map'),
     lineArt
@@ -136,11 +164,9 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
           h('button', { type: 'button', onclick: onRetake }, 'Take a different photo'),
         )
       : '',
-    h('p', { class: 'muted' }, 'Each number is one color to mix. Long-press anywhere on the picture to get a mix for that exact spot.'),
-    h('div', { class: 'stage' }, base, overlay),
-    closest ? h('p', {}, `${closest} region${closest > 1 ? 's are' : ' is'} hard to match with these paints, so ${closest > 1 ? 'they are' : 'it is'} marked "Closest possible".`) : '',
-    h('p', { class: 'muted' }, 'Mixes are starting points: real paint, brands, and the light in your photo all shift the result. Always test a small dab first.'),
-    ...regions.regions.map((r) => regionCard(s, r.id)),
+    tabs,
+    mapPanel,
+    comparePanel,
     h('div', { class: 'row' }, h('button', { type: 'button', onclick: onBack }, 'Back')),
     status,
     planBtn,

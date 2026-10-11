@@ -37,8 +37,9 @@ button:disabled { opacity: 0.5; }
 button.full { width: 100%; }
 button.big { min-height: 64px; font-size: 22px; }
 
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
-.choices button[aria-pressed='true'] { background: var(--text); color: var(--bg); }
+.choices button[aria-pressed='true'], .choices button[aria-selected='true'] { background: var(--text); color: var(--bg); }
 
 input[type='text'], input[type='url'], select, textarea {
   font: inherit; width: 100%; min-height: 52px; padding: 10px; border: 3px solid var(--line); border-radius: 10px; background: #fff; color: #000;

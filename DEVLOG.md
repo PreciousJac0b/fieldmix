@@ -187,3 +187,19 @@ Tests: web 87/87, server 92/92.
 - **Fix 2, line-art detection** (`neutralShare`): if 90% or more of the picture is neutral (chroma < 10), the color map shows a note: it looks like an outline drawing or blank canvas, so there are no colors to mix; photograph the host's finished sample painting instead. It comes with a "Take a different photo" button, and the user can still continue.
 - **Tests (+5, web now 101/101):** distance-transform values; a scattered region gets its number inside one of its squares, not at the gap's centroid; numbers on synthetic line art stay at least the spacing apart; every number sits on its own region; `neutralShare` is above 0.99 for line art and below 0.01 for a colorful scene.
 - **Checked in Chrome at phone size:** the line-art image shows the note and the numbers don't overlap; the coastline shows no note, and its numbers sit inside the right areas.
+
+### 2026-10-11 — Before / after comparison (user request)
+
+- **Built:** a "Before / after" tab next to "Color map". On the left is the uploaded photo; on the right, a preview of the finished painting made from the painter's own mixes. Every region is filled with its **current** recipe's spectral.js mix color, so test-dab adjustments show up (the tab is rebuilt each time it opens).
+- **Making the preview look painted:** a 5 × 5 majority (mode) filter first turns k-means speckle into blocky shapes, like the ones a painter actually blocks in.
+- **Comparing:** a wipe divider you can drag on the picture (with pointer capture, falling back to a tracked drag), plus a slider and Photo / Both / Painting buttons.
+- **Shown below it:**
+  - the overall color match: area-weighted CIEDE2000 between each region's target and its mix, with a Good/OK/Closest-possible badge;
+  - how many of the painter's paints the plan uses;
+  - a plain note that this is flat shapes in mixed colors, and that brushwork, layering, real pigments and light will change the result.
+- **Code:** `color/preview.ts` holds pure functions (`hexToRgb8`, `modeFilter`, `paintPreview`, `areaWeightedDeltaE`; 7 tests). `ui/compare.ts` is the view. Web tests: 108/108.
+- **Fixed on the way:** TypeScript 6 rejected `new ImageData(Uint8ClampedArray<ArrayBufferLike>)`, so `paintPreview` now declares a plain `ArrayBuffer`. The three quick buttons wrapped at phone width; they're now a 3-column row.
+- **Checked in Chrome at phone size (coastline stand-in):**
+  - the tab builds in 15 ms and shows "Good, average ΔE 0.6";
+  - dragging moves the divider, and moving after letting go doesn't;
+  - Photo and Painting jump to each end (the center pixel switches between the photo and the mix color).
