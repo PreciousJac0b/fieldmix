@@ -62,3 +62,26 @@ def test_health_when_ollama_is_down(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(main.httpx, "AsyncClient", lambda **kw: real_client(transport=transport, **kw))
     monkeypatch.setattr(main, "settings", Settings())
     assert TestClient(main.app).get("/api/health").json()["model_ready"] is False
+
+
+def test_mount_web_serves_the_built_pwa_without_hiding_the_api(tmp_path: Path) -> None:
+    from fastapi import FastAPI
+
+    dist = tmp_path / "dist"
+    test_app = FastAPI()
+
+    @test_app.get("/api/health")
+    async def _health() -> dict[str, bool]:
+        return {"ok": True}
+
+    assert main.mount_web(test_app, dist) is False  # not built yet
+    client = TestClient(test_app)
+    assert client.get("/").status_code == 404
+    assert client.get("/api/health").json() == {"ok": True}
+
+    # Built later: served without remounting or restarting.
+    (dist / "index.html").write_text("<title>Fieldmix</title>")
+    (dist / "app.js").write_text("console.log(1)")
+    assert "Fieldmix" in client.get("/").text
+    assert client.get("/app.js").status_code == 200
+    assert client.get("/api/health").json() == {"ok": True}

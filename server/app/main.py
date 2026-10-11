@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from .config import Settings, get_settings
+from .config import REPO_ROOT, Settings, get_settings
 from .providers import Provider, get_provider
 from .schemas import AskRequest, AskResponse, PlanRequest, PlanResponse
 
@@ -62,3 +65,18 @@ async def plan(req: PlanRequest) -> PlanResponse:
 async def ask(req: AskRequest) -> AskResponse:
     """Answer a mid-session question about the current step."""
     return AskResponse(answer=await provider.ask(req))
+
+
+def mount_web(target: FastAPI, dist: Path) -> bool:
+    """Serve the built PWA (web/dist) at / so the phone loads app and API from one origin.
+
+    Mounted after the API routes, so /api/* still reaches them. Mounted even before the
+    first `npm run build` (the empty folder is created; it is gitignored), so a later
+    build is served without a restart. Returns whether a build is present right now.
+    """
+    dist.mkdir(parents=True, exist_ok=True)
+    target.mount("/", StaticFiles(directory=dist, html=True), name="web")
+    return (dist / "index.html").is_file()
+
+
+mount_web(app, REPO_ROOT / "web" / "dist")

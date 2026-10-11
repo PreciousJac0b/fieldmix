@@ -116,3 +116,50 @@ Equivalent ratios are removed with a GCD check (2:2 = 1:1). Palettes with more t
   - **Thinking on, for comparison** (6 plans): all valid, median **17.9 s**, p95 19.7 s. With thinking off the plans are just as valid and about 3× faster, so `think: false` stays.
 - `/api/ask` live: 1.4–1.6 s and about 30 words. "How much white should I add?" got no amount. With a photo attached, it gave one concrete suggestion.
 - These figures are on stand-in photos with small samples. The numbers the post may quote come from `scripts/eval.py` on the real fixtures (Phase 6).
+
+## 2026-10-11 — Phase 3: Phone-first PWA
+
+**Built** (`web/src/`, no UI framework; a 30-line `h()` helper builds the DOM):
+- **Screens:** Setup (mode, medium, 30/60/90 minutes, regions 4–10) → Photo → Paints → Color map → Plan → Paint mode, plus Settings.
+- **Photo** (`ui/capture.ts`): `<input type="file" accept="image/*" capture="environment">`, never `getUserMedia`. Each photo is decoded once at 768 px (the JPEG for Gemma), and a 512 px copy is drawn from it for the color engine. In Artwork mode the hint says to photograph the host's **finished sample painting**, not the outlined canvas. (The user's outline-canvas photos made this obvious: black line art on white has nothing to mix.)
+- **Paints** (`ui/palette.ts`, `store.ts`):
+  - quick path: tick presets (the student set + white is preselected, and the last palette is remembered);
+  - accurate path: photograph a swatch card, tap bare paper (white balance), tap each dab and name it from a list or free text;
+  - named palettes are saved in IndexedDB.
+- **Color map** (`ui/regionMap.ts`):
+  - numbered overlay, with recipes solved in the Web Worker;
+  - one card per region: target → mix chips, parts as dots, the recipe text, a Good/OK/Closest-possible badge, "Starting point: test dab first", adjustment tips when ΔE ≥ 5, and the second option under "Don't have one of these?";
+  - long-press (500 ms; moving more than 10 px cancels) → eyedropper sheet with 2 recipes for that exact spot.
+- **Paint mode** (`ui/paintMode.ts`):
+  - a "Start painting" tap unlocks speech and keeps the screen on;
+  - one step per screen at 22–30 px with fixed 72 px Back/Next buttons;
+  - each step is read aloud as the model's instruction **followed by the computed recipe** (`session.spokenStep`);
+  - every mix has a test-dab card with the five buttons, and feedback updates the working recipe;
+  - Ask box with an optional photo of the painting in progress;
+  - "Offline mode" badge.
+- **Offline** (`plan/fallback.ts`): if `/api/health` doesn't answer within 3 s, or `/api/plan` fails, the TypeScript port of the fallback planner runs on the phone. All 7 parity cases match the Python planner exactly.
+- **Screen on** (`ui/wakeLock.ts`): Screen Wake Lock if available, else a muted inline video fed from a 2×2 canvas (no media file). Settings explains Chrome's insecure-origin flag.
+- **Field serving:** FastAPI mounts `web/dist` at `/` after the API routes.
+
+**What broke and how it was fixed.**
+- Two `append(null)` type errors, and `node:fs` with no Node types in a test. Fixed by importing the parity fixture as JSON instead of adding `@types/node`.
+- **Phone layout:** the recipe dot rows wrapped, so paint names ended up on a separate line from their dots. First fix used an `em`-sized column, which grew with paint mode's 22 px text. Final fix: a natural-width grid (chip | dots | name), with the target → mix chips on their own line.
+- **FastAPI served 404 at `/`:** `scripts/dev.sh`'s auto-reload happened before `web/dist` existed, and the mount was skipped. Changed to always mount. The test then caught that Starlette raises on a missing folder, so `mount_web` creates the empty gitignored folder; a build appearing later is served without a restart.
+
+**Verified in the browser** (Chrome, phone viewport 375 × 812, stand-in photos loaded via `?photo=`):
+- color map in 372 ms;
+- Gemma plan in 6.8 s (Vite dev) and 9.4 s (built app from FastAPI on port 8000);
+- paint mode renders;
+- Too dark → +1 Titanium White, and Too dull → +1 Phthalo Blue, each re-spoken;
+- Next works;
+- long-press opens the eyedropper, and a short tap doesn't;
+- no console errors;
+- **offline:** pointing the app at a dead backend gave a fallback plan in 246 ms with the badge, and speech was playing.
+
+Tests: web 87/87, server 92/92.
+
+**Not verified here:** a real Android phone (the user's check: http://<laptop-IP>:5173 or :8000), the swatch-scan taps in a browser (the functions are unit-tested), and whether the video wake-lock fallback keeps an Android screen on.
+
+**Open observations:**
+1. Recipes are accurate (ΔE 0.4–0.9) but often use 4 paints and up to 16 parts. Painters would probably prefer a 2-paint mix at ΔE 3.
+2. The fallback's color-only labels can be wrong (a blue-grey rock labeled "sky"). Gemma labels from the image when the laptop is reachable.
