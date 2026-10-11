@@ -128,9 +128,21 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onRetak
   const closest = s.recipes.filter((r) => r.closest_possible).length
   const lineArt = isLineArt(regions.regions)
 
+  // Outline drawings open on Color it in (built below); this note explains the grey map
+  // on the Color map tab.
+  const lineArtNote = lineArt
+    ? h(
+        'div',
+        { class: 'card', role: 'note' },
+        h('strong', {}, 'This picture is almost all black, white and grey.'),
+        h('p', {}, "It looks like an outline drawing or a blank canvas, so there are no colors to mix yet. Color it in with your own paints, or photograph the host's finished sample painting instead."),
+        h('div', { class: 'row' }, h('button', { type: 'button', class: 'primary', onclick: () => select('compare') }, icon('brush'), 'Color it in'), h('button', { type: 'button', onclick: onRetake }, icon('retake'), 'Take a different photo')),
+      )
+    : null
   const mapPanel = h(
     'div',
     { role: 'tabpanel', id: 'panel-map' },
+    lineArtNote,
     h('p', { class: 'muted tip-line' }, icon('eyedropper', 20), h('span', {}, 'Each number is one color to mix. Long-press anywhere on the picture to get a mix for that exact spot.')),
     h('div', { class: 'stage' }, base, overlay),
     closest ? h('p', {}, `${closest} region${closest > 1 ? 's are' : ' is'} hard to match with these paints, so ${closest > 1 ? 'they are' : 'it is'} marked "Closest possible".`) : '',
@@ -161,19 +173,14 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onRetak
   }
   mapTab.addEventListener('click', () => select('map'))
   compareTab.addEventListener('click', () => select('compare'))
-  tabs.append(mapTab, compareTab)
+  // Outline drawings (and colorings already started) open on Color it in, with the
+  // color map as the alternative; photos open on the color map.
+  if (colorIn) tabs.append(compareTab, mapTab)
+  else tabs.append(mapTab, compareTab)
+  select(colorIn ? 'compare' : 'map')
 
   root.append(
     pageTitle('palette', 'Your colors', 'var(--tint-green)'),
-    lineArt
-      ? h(
-          'div',
-          { class: 'card', role: 'note' },
-          h('strong', {}, 'This picture is almost all black, white and grey.'),
-          h('p', {}, 'It looks like an outline drawing or a blank canvas, so there are no colors to mix yet. Color it in with your own paints, or photograph the host\'s finished sample painting instead.'),
-          h('div', { class: 'row' }, h('button', { type: 'button', class: 'primary', onclick: () => select('compare') }, icon('brush'), 'Color it in'), h('button', { type: 'button', onclick: onRetake }, icon('retake'), 'Take a different photo')),
-        )
-      : '',
     tabs,
     mapPanel,
     comparePanel,

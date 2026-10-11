@@ -346,3 +346,4 @@ Tests: web 87/87, server 92/92.
 - **Checked** in the browser at 300, 360 and 375 px: every page, both subjects, Color it in, a live Gemma plan, paint mode to the done screen, browser back and forward. Nothing is wider than its box, and the page never scrolls sideways.
 - **Tests:** web 130 (+4 router), server 101.
 
+- **Follow-up (user request):** outline drawings now open the Colors page on **Color it in**, with **Color map** as the second tab. A coloring already in progress does too. Colored photos still open on the color map (Color it in isn't offered for them). The "almost all black, white and grey" note moved into the Color map tab, where the grey map needs explaining.
