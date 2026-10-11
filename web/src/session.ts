@@ -31,8 +31,10 @@ export interface ColoringState {
   /** Painter-drawn outlines, each a flat [x0, y0, x1, y1, …] list in image px. */
   strokes: number[][]
   choices: Map<string, ColorChoice>
-  /** What Undo removes next. */
-  history: ('fill' | 'stroke')[]
+  /** What Undo removes next: one fill, one outline, or the n fills of a suggestion. */
+  history: ('fill' | 'stroke' | number)[]
+  /** The last color suggestion, shown with its reasons until changed or undone. */
+  suggestion: { source: 'gemma' | 'rules'; items: { number: number; x: number; y: number; key: string; reason: string }[] } | null
   tool: 'fill' | 'outline'
   paintId: string
   /** Parts of white per part of paint: 0 (as is), 1 (lighter), 3 (pale). */

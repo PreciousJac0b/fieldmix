@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildColoringModel, rasterizeStrokes, regionsFromColoring, renderColoring, resolveFills, shapeAt, withOutlines, type ColorChoice } from '../src/color/coloring.ts'
+import { buildColoringModel, largestShapes, rasterizeStrokes, regionsFromColoring, renderColoring, resolveFills, ruleBasedSuggestion, shapeAt, shapeNeighbors, withOutlines, type ColorChoice } from '../src/color/coloring.ts'
 import { makeImage } from './helpers.ts'
 
 const WHITE: [number, number, number] = [250, 250, 250]
@@ -132,5 +132,74 @@ describe('painter-drawn outlines', () => {
     const m = withOutlines(buildColoringModel(page(), 60, 1), [[40, 0, 40, 39]])
     const out = renderColoring(m, new Map(), [30, 30, 30], [250, 250, 250], [30, 90, 200])
     expect(Array.from(out.slice((5 * 80 + 40) * 4, (5 * 80 + 40) * 4 + 3))).toEqual([30, 90, 200])
+  })
+})
+
+describe('color suggestions (numbering, neighbors, rule-based fallback)', () => {
+  // Page split into: background, a big box, and two small boxes side by side inside it.
+  const img = () =>
+    makeImage(100, 80, (x, y) => {
+      const rect = (x0: number, y0: number, x1: number, y1: number) => ((x === x0 || x === x1) && y >= y0 && y <= y1) || ((y === y0 || y === y1) && x >= x0 && x <= x1)
+      return rect(10, 10, 89, 69) || rect(20, 20, 49, 59) || rect(50, 20, 79, 59) ? BLACK : WHITE
+    })
+  const palette = [
+    { id: 'red', hex: '#d93a2b', lab: [52, 62, 45] as [number, number, number], neutral: false },
+    { id: 'blue', hex: '#243b8f', lab: [27, 18, -48] as [number, number, number], neutral: false },
+    { id: 'yellow', hex: '#f9d71c', lab: [87, -3, 83] as [number, number, number], neutral: false },
+    { id: 'white', hex: '#f4f3ee', lab: [96, 0, 2] as [number, number, number], neutral: true },
+  ]
+
+  it('numbers the largest shapes by size, each number inside its shape', () => {
+    const m = buildColoringModel(img(), 60, 1)
+    const shapes = largestShapes(m, 12, 0.5)
+    expect(shapes.length).toBeGreaterThanOrEqual(3)
+    expect(shapes.map((s) => s.number)).toEqual(shapes.map((_, i) => i + 1))
+    for (let i = 1; i < shapes.length; i++) expect(shapes[i - 1].area_pct).toBeGreaterThanOrEqual(shapes[i].area_pct)
+    for (const s of shapes) expect(m.shape[s.point[1] * m.width + s.point[0]]).toBe(s.shape)
+  })
+
+  it('finds shapes that touch across a line', () => {
+    const m = buildColoringModel(img(), 60, 1)
+    const shapes = largestShapes(m, 12, 0.5)
+    const left = shapes.find((s) => s.shape === shapeAt(m, 35, 40))!
+    const right = shapes.find((s) => s.shape === shapeAt(m, 65, 40))!
+    const nb = shapeNeighbors(m, shapes)
+    expect(nb.get(left.number)!.has(right.number)).toBe(true)
+  })
+
+  it('rule-based: pale background, colored paints only, neighbors never share a paint', () => {
+    const m = buildColoringModel(img(), 60, 1)
+    const shapes = largestShapes(m, 12, 0.5)
+    const nb = shapeNeighbors(m, shapes)
+    const sug = ruleBasedSuggestion(m, shapes, nb, palette, true)
+    expect(sug.map((s) => s.number)).toEqual(shapes.map((s) => s.number))
+    const bg = shapes.find((s) => s.shape === shapeAt(m, 2, 2))!
+    const bgSug = sug.find((s) => s.number === bg.number)!
+    expect(bgSug.paint_id).toBe('blue') // the cool paint
+    expect(bgSug.lighten).toBe(3)
+    expect(sug.every((s) => s.paint_id !== 'white')).toBe(true)
+    const paintOf = new Map(sug.map((s) => [s.number, s.paint_id]))
+    for (const [a, set] of nb) for (const b of set) expect(paintOf.get(a)).not.toBe(paintOf.get(b))
+  })
+
+  it('rule-based finds the background even when a frame line keeps shapes off the edge', () => {
+    // Same drawing inside a black frame 1 px from the edge.
+    const framed = makeImage(100, 80, (x, y) => {
+      if (x === 1 || y === 1 || x === 98 || y === 78) return BLACK
+      const rect = (x0: number, y0: number, x1: number, y1: number) => ((x === x0 || x === x1) && y >= y0 && y <= y1) || ((y === y0 || y === y1) && x >= x0 && x <= x1)
+      return rect(10, 10, 89, 69) || rect(20, 20, 49, 59) || rect(50, 20, 79, 59) ? BLACK : WHITE
+    })
+    const m = buildColoringModel(framed, 60, 1)
+    const shapes = largestShapes(m, 12, 0.5)
+    const sug = ruleBasedSuggestion(m, shapes, shapeNeighbors(m, shapes), palette, true)
+    const bg = shapes.find((s) => s.shape === shapeAt(m, 5, 5))!
+    expect(sug.find((s) => s.number === bg.number)!.lighten).toBe(3)
+  })
+
+  it('rule-based without white never lightens', () => {
+    const m = buildColoringModel(img(), 60, 1)
+    const shapes = largestShapes(m, 12, 0.5)
+    const sug = ruleBasedSuggestion(m, shapes, shapeNeighbors(m, shapes), palette.slice(0, 3), false)
+    expect(sug.every((s) => s.lighten === 0)).toBe(true)
   })
 })

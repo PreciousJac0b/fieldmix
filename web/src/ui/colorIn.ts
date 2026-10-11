@@ -5,11 +5,16 @@
  * colors: they become regions with exact recipes, and the normal planner takes over.
  */
 
+import { health, suggestColors } from '../api.ts'
+import { chroma, hexToLab } from '../color/lab.ts'
 import {
   buildColoringModel,
   DEFAULT_CLOSE_RADIUS,
+  largestShapes,
   LINE_L,
   regionsFromColoring,
+  ruleBasedSuggestion,
+  shapeNeighbors,
   renderColoring,
   resolveFills,
   shapeAt,
@@ -63,6 +68,7 @@ function stateFor(s: Session): ColoringState {
       strokes: [],
       choices: new Map(),
       history: [],
+      suggestion: null,
       tool: 'fill',
       paintId: s.palette.find((p) => classifyPalette([p]).colored.length)?.id ?? s.palette[0].id,
       lighten: 0,
@@ -72,17 +78,56 @@ function stateFor(s: Session): ColoringState {
   return s.coloring
 }
 
-/** The current color: the chosen paint, plus 0, 1 or 3 parts of the palette's white. */
-function currentChoice(s: Session, st: ColoringState): ColorChoice {
+/** A paint plus 0, 1 or 3 parts of the palette's white, mixed with spectral.js. */
+function choiceFor(s: Session, st: ColoringState, paintId: string, lightenWanted: 0 | 1 | 3): ColorChoice {
   const { white } = classifyPalette(s.palette)
   const whitePaint = white >= 0 ? s.palette[white] : null
-  const lighten = whitePaint && whitePaint.id !== st.paintId ? st.lighten : 0
-  const key = `${st.paintId}+w${lighten}`
+  const lighten = whitePaint && whitePaint.id !== paintId ? lightenWanted : 0
+  const key = `${paintId}+w${lighten}`
   const existing = st.choices.get(key)
   if (existing) return existing
-  const parts = [{ paint_id: st.paintId, parts: 1 }, ...(lighten && whitePaint ? [{ paint_id: whitePaint.id, parts: lighten }] : [])]
+  const parts = [{ paint_id: paintId, parts: 1 }, ...(lighten && whitePaint ? [{ paint_id: whitePaint.id, parts: lighten }] : [])]
   const mixed = mixPaints(parts.map((p) => ({ hex: s.palette.find((q) => q.id === p.paint_id)!.hex, parts: p.parts })))
   return { key, hex: mixed.hex, lab: mixed.lab, parts }
+}
+
+/** The color currently selected in the picker. */
+function currentChoice(s: Session, st: ColoringState): ColorChoice {
+  return choiceFor(s, st, st.paintId, st.lighten)
+}
+
+/** The drawing with the shape numbers on it, as a JPEG for Gemma (1.5× so numbers are legible). */
+function numberedDrawing(s: Session, shapes: { number: number; point: [number, number] }[]): string {
+  const src = s.photo!.canvas
+  const scale = 1.5
+  const c = document.createElement('canvas')
+  c.width = Math.round(src.width * scale)
+  c.height = Math.round(src.height * scale)
+  const ctx = c.getContext('2d')!
+  ctx.drawImage(src, 0, 0, c.width, c.height)
+  drawNumbers(ctx, shapes, scale, 16)
+  return c.toDataURL('image/jpeg', 0.85).split(',', 2)[1]
+}
+
+/** Numbers in white circles with a black outline, at each shape's point. */
+function drawNumbers(ctx: CanvasRenderingContext2D, shapes: { number: number; point: [number, number] }[], scale: number, r: number): void {
+  ctx.save()
+  ctx.font = `bold ${Math.round(r * 1.1)}px system-ui, sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  for (const sh of shapes) {
+    const [x, y] = [sh.point[0] * scale, sh.point[1] * scale]
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fillStyle = '#fff'
+    ctx.fill()
+    ctx.lineWidth = 2
+    ctx.strokeStyle = '#000'
+    ctx.stroke()
+    ctx.fillStyle = '#000'
+    ctx.fillText(String(sh.number), x, y + 1)
+  }
+  ctx.restore()
 }
 
 function colorName(s: Session, c: ColorChoice): string {
@@ -133,6 +178,83 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
   const clearBtn = h('button', { type: 'button' }, 'Clear all')
   const status = h('p', { class: 'muted', role: 'status' })
 
+  const suggestBtn = h('button', { type: 'button', class: 'primary big full' }, '✨ Suggest colors')
+  const suggestStatus = h('p', { class: 'muted', role: 'status' })
+  const suggestCard = h('div')
+  function renderSuggestionCard(): void {
+    const sug = st.suggestion
+    if (!sug) {
+      suggestCard.replaceChildren()
+      return
+    }
+    suggestCard.replaceChildren(
+      h(
+        'div',
+        { class: 'card' },
+        h('strong', {}, sug.source === 'gemma' ? 'Suggested by Gemma on your laptop' : 'Simple suggestion (Gemma unavailable)'),
+        h('p', { class: 'muted' }, sug.source === 'gemma' ? 'A starting point: tap any shape to change its color, or Undo to remove the whole suggestion.' : 'Rules only: neighboring shapes get different paints and the background is pale. It can\'t tell a face from a cap, so change anything you like.'),
+        ...sug.items.map((it) => {
+          const c = st.choices.get(it.key)!
+          return h('div', { class: 'dotrow' }, h('span', { class: 'num' }, String(it.number)), chip(c.hex), h('span', {}, h('strong', {}, colorName(s, c)), ' — ', it.reason))
+        }),
+      ),
+    )
+  }
+
+  suggestBtn.addEventListener('click', async () => {
+    suggestBtn.disabled = true
+    const shapes = largestShapes(m, 12)
+    if (!shapes.length) {
+      suggestStatus.textContent = 'No large shapes found to color.'
+      suggestBtn.disabled = false
+      return
+    }
+    const { white } = classifyPalette(s.palette)
+    const canLighten = white >= 0
+    let items: { number: number; paint_id: string; lighten: 0 | 1 | 3; reason: string }[] = []
+    let source: 'gemma' | 'rules' = 'rules'
+    try {
+      suggestStatus.textContent = 'Asking Gemma to choose from your paints… (about 10 seconds)'
+      if (await health()) {
+        const res = await suggestColors({
+          image_b64: numberedDrawing(s, shapes),
+          palette: s.palette.map(({ id, name, hex }) => ({ id, name, hex })),
+          shapes: shapes.map(({ number, area_pct, centroid, bbox }) => ({ number, area_pct, centroid, bbox })),
+          can_lighten: canLighten,
+        })
+        if (res.source === 'gemma' && res.suggestions.length) {
+          items = res.suggestions
+          source = 'gemma'
+        }
+      }
+    } catch {
+      /* unreachable or failed: use the rules below */
+    }
+    if (source === 'rules') {
+      const palette = s.palette.map((p) => {
+        const lab = hexToLab(p.hex)
+        return { id: p.id, hex: p.hex, lab, neutral: chroma(lab) < 12 }
+      })
+      items = ruleBasedSuggestion(m, shapes, shapeNeighbors(m, shapes), palette, canLighten)
+    }
+    const byNumber = new Map(shapes.map((sh) => [sh.number, sh]))
+    const applied: NonNullable<ColoringState['suggestion']>['items'] = []
+    for (const it of items) {
+      const sh = byNumber.get(it.number)
+      if (!sh) continue
+      const c = choiceFor(s, st, it.paint_id, it.lighten)
+      st.choices.set(c.key, c)
+      st.fills.push({ x: sh.point[0], y: sh.point[1], key: c.key })
+      applied.push({ number: it.number, x: sh.point[0], y: sh.point[1], key: c.key, reason: it.reason })
+    }
+    st.history.push(applied.length)
+    st.suggestion = { source, items: applied }
+    fills = resolveFills(m, st.fills)
+    suggestStatus.textContent = ''
+    suggestBtn.disabled = false
+    redraw()
+  })
+
   const rebuild = () => {
     m = modelFor(s)
     fills = resolveFills(m, st.fills)
@@ -141,6 +263,8 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
   const redraw = () => {
     const rgb = new Map([...fills].map(([shape, key]) => [shape, hexToRgb8(st.choices.get(key)!.hex)]))
     ctx.putImageData(new ImageData(renderColoring(m, rgb, LINE_RGB, CANVAS_RGB, USER_RGB), m.width, m.height), 0, 0)
+    if (st.suggestion) drawNumbers(ctx, st.suggestion.items.map((it) => ({ number: it.number, point: [it.x, it.y] })), 1, 9)
+    renderSuggestionCard()
     const c = currentChoice(s, st)
     current.replaceChildren(chip(c.hex), h('strong', {}, colorName(s, c)), h('span', { class: 'muted' }, recipeText(s.palette, c.parts)))
     const counts = new Map<string, number>()
@@ -229,6 +353,10 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
   undoBtn.addEventListener('click', () => {
     const last = st.history.pop()
     if (last === 'fill') st.fills.pop()
+    if (typeof last === 'number') {
+      st.fills.splice(st.fills.length - last, last)
+      st.suggestion = null
+    }
     if (last === 'stroke') {
       st.strokes.pop()
       rebuild()
@@ -240,6 +368,7 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
     st.fills = []
     st.strokes = []
     st.history = []
+    st.suggestion = null
     rebuild()
     redraw()
   })
@@ -299,6 +428,9 @@ export function renderColorIn(s: Session, onPlan: () => Promise<void>): HTMLElem
     {},
     h('h2', {}, 'Color it in'),
     h('p', {}, 'Pick one of your paints, then tap shapes on the drawing to fill them. Where the drawing is open, like loose curls of hair, draw your own outline first so the color stays inside. When it looks right, Fieldmix plans the painting with exactly these colors.'),
+    suggestBtn,
+    suggestStatus,
+    suggestCard,
     picker,
     white >= 0 ? h('div', {}, h('p', { class: 'muted' }, 'Add white:'), lightenRow) : '',
     h('div', { class: 'card' }, h('p', { class: 'muted' }, 'Selected color'), current),

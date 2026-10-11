@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import REPO_ROOT, Settings, get_settings
 from .providers import Provider, get_provider
-from .schemas import AskRequest, AskResponse, PlanRequest, PlanResponse
+from .schemas import AskRequest, AskResponse, PlanRequest, PlanResponse, SuggestRequest, SuggestResponse
 
 settings: Settings = get_settings()
 provider: Provider = get_provider(settings)
@@ -65,6 +65,12 @@ async def plan(req: PlanRequest) -> PlanResponse:
 async def ask(req: AskRequest) -> AskResponse:
     """Answer a mid-session question about the current step."""
     return AskResponse(answer=await provider.ask(req))
+
+
+@app.post("/api/suggest-colors")
+async def suggest_colors(req: SuggestRequest) -> SuggestResponse:
+    """For an outline drawing: one of the painter's paints per numbered shape (Gemma)."""
+    return await provider.suggest_colors(req)
 
 
 def mount_web(target: FastAPI, dist: Path) -> bool:

@@ -254,3 +254,127 @@ export function regionsFromColoring(
   })
   return { regions, labelMap, keys: order }
 }
+
+/** A numbered shape offered for color suggestions. */
+export interface NumberedShape {
+  shape: number
+  number: number
+  area_pct: number
+  centroid: [number, number]
+  bbox: [number, number, number, number]
+  /** Where to draw the number (deep inside the shape); also used as the fill tap point. */
+  point: [number, number]
+}
+
+/** The `max` largest shapes (at least `minPct` of the drawing), numbered 1..n by size. */
+export function largestShapes(m: ColoringModel, max = 12, minPct = 0.5): NumberedShape[] {
+  const n = m.width * m.height
+  const count = new Uint32Array(m.shapeCount)
+  for (let i = 0; i < n; i++) if (m.shape[i] >= 0) count[m.shape[i]]++
+  const picked = Array.from({ length: m.shapeCount }, (_, s) => s)
+    .filter((s) => (count[s] / n) * 100 >= minPct)
+    .sort((a, b) => count[b] - count[a])
+    .slice(0, max)
+  const index = new Map(picked.map((s, i) => [s, i]))
+  const labelMap = new Uint8Array(n).fill(255)
+  const sx = new Float64Array(picked.length)
+  const sy = new Float64Array(picked.length)
+  const box = picked.map(() => [m.width, m.height, -1, -1])
+  for (let i = 0; i < n; i++) {
+    const k = index.get(m.shape[i])
+    if (k === undefined) continue
+    labelMap[i] = k
+    const x = i % m.width
+    const y = (i - x) / m.width
+    sx[k] += x
+    sy[k] += y
+    const b = box[k]
+    if (x < b[0]) b[0] = x
+    if (y < b[1]) b[1] = y
+    if (x > b[2]) b[2] = x
+    if (y > b[3]) b[3] = y
+  }
+  const cx = picked.map((s, k) => sx[k] / count[s])
+  const cy = picked.map((s, k) => sy[k] / count[s])
+  const points = placeLabels(labelMap, m.width, m.height, cx, cy)
+  return picked.map((s, k) => ({
+    shape: s,
+    number: k + 1,
+    area_pct: Math.round((count[s] / n) * 1000) / 10,
+    centroid: [Math.round(cx[k]), Math.round(cy[k])],
+    bbox: [box[k][0], box[k][1], box[k][2] - box[k][0] + 1, box[k][3] - box[k][1] + 1],
+    point: points[k],
+  }))
+}
+
+/**
+ * Which numbered shapes touch: two shapes are neighbors if a short hop across a wall
+ * (up to 2·closeRadius + 3 px, horizontally or vertically) goes from one to the other.
+ */
+export function shapeNeighbors(m: ColoringModel, shapes: NumberedShape[]): Map<number, Set<number>> {
+  const byShape = new Map(shapes.map((s) => [s.shape, s.number]))
+  const out = new Map(shapes.map((s) => [s.number, new Set<number>()]))
+  const hop = 2 * m.closeRadius + 3
+  for (let y = 0; y < m.height; y++) {
+    for (let x = 0; x < m.width; x++) {
+      const a = byShape.get(m.shape[y * m.width + x])
+      if (a === undefined) continue
+      const probes = [x + hop < m.width ? y * m.width + x + hop : -1, y + hop < m.height ? (y + hop) * m.width + x : -1]
+      for (const j of probes) {
+        const b = j >= 0 ? byShape.get(m.shape[j]) : undefined
+        if (b === undefined || b === a) continue
+        out.get(a)!.add(b)
+        out.get(b)!.add(a)
+      }
+    }
+  }
+  return out
+}
+
+export interface ShapeSuggestion {
+  number: number
+  paint_id: string
+  lighten: 0 | 1 | 3
+  reason: string
+}
+
+/**
+ * Rule-based suggestion (offline, or when Gemma's answer fails validation). It can't
+ * tell a face from a cap, so it only makes a tidy scheme: the largest shape touching
+ * the edge is the background, in a pale cool paint; every other shape gets a colored
+ * paint none of its neighbors use, strongest colors first.
+ */
+export function ruleBasedSuggestion(
+  m: ColoringModel,
+  shapes: NumberedShape[],
+  neighbors: Map<number, Set<number>>,
+  palette: { id: string; hex: string; lab: [number, number, number]; neutral: boolean }[],
+  canLighten: boolean,
+): ShapeSuggestion[] {
+  const colored = palette.filter((p) => !p.neutral)
+  const pool = (colored.length ? colored : palette).slice().sort((a, b) => Math.hypot(b.lab[1], b.lab[2]) - Math.hypot(a.lab[1], a.lab[2]))
+  // "Touches the edge" allows a margin: a frame line around the picture plus the
+  // gap-closing padding keeps every shape a few pixels away from the true edge.
+  const margin = Math.max(m.closeRadius + 4, Math.round(0.03 * Math.min(m.width, m.height)))
+  const touchesEdge = (s: NumberedShape) =>
+    s.bbox[0] <= margin || s.bbox[1] <= margin || s.bbox[0] + s.bbox[2] >= m.width - margin || s.bbox[1] + s.bbox[3] >= m.height - margin
+  const background = shapes.find(touchesEdge)
+  const hue = (p: (typeof pool)[number]) => ((Math.atan2(p.lab[2], p.lab[1]) * 180) / Math.PI + 360) % 360
+  const cool = pool.find((p) => hue(p) >= 180 && hue(p) < 300) ?? pool[pool.length - 1]
+  const chosen = new Map<number, string>()
+  const out: ShapeSuggestion[] = []
+  if (background) {
+    chosen.set(background.number, cool.id)
+    out.push({ number: background.number, paint_id: cool.id, lighten: canLighten ? 3 : 0, reason: 'background: pale and calm so the drawing stands out' })
+  }
+  let turn = 0
+  for (const s of shapes) {
+    if (s === background) continue
+    const taken = new Set([...(neighbors.get(s.number) ?? [])].map((n) => chosen.get(n)).filter(Boolean) as string[])
+    const pick = pool.find((p, i) => !taken.has(p.id) && i >= turn % pool.length) ?? pool.find((p) => !taken.has(p.id)) ?? pool[turn % pool.length]
+    chosen.set(s.number, pick.id)
+    out.push({ number: s.number, paint_id: pick.id, lighten: canLighten && turn % 2 === 1 ? 1 : 0, reason: 'different from the shapes next to it' })
+    turn++
+  }
+  return out.sort((a, b) => a.number - b.number)
+}

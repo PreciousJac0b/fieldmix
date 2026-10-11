@@ -17,11 +17,12 @@ from pydantic import ValidationError
 
 from ..calllog import log_model_call
 from ..fallback import fallback_plan
-from ..schemas import AskRequest, PlanOutput, PlanRequest, PlanResponse
-from ..validate import find_ratio_phrases, normalize_plan, validate_plan
+from ..schemas import AskRequest, PlanOutput, PlanRequest, PlanResponse, SuggestOutput, SuggestRequest, SuggestResponse
+from ..validate import find_ratio_phrases, normalize_plan, normalize_suggestions, validate_plan, validate_suggestions
 
 PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 PLAN_SCHEMA: dict[str, Any] = PlanOutput.model_json_schema()
+SUGGEST_SCHEMA: dict[str, Any] = SuggestOutput.model_json_schema()
 ASK_WORD_LIMIT = 80
 ASK_FALLBACK = (
     "I couldn't come up with a good answer just now. Follow the recipe on screen, "
@@ -89,6 +90,20 @@ def build_ask_prompt(req: AskRequest) -> str:
 
 
 PREMATURE_CLOSE = re.compile(r'\]\s*\}\s*,\s*"steps"\s*:')
+
+
+def build_suggest_prompt(req: SuggestRequest) -> str:
+    """The user message for /api/suggest-colors: the numbered shapes and the painter's paints."""
+    width = max(sh.bbox[0] + sh.bbox[2] for sh in req.shapes) or 1
+    height = max(sh.bbox[1] + sh.bbox[3] for sh in req.shapes) or 1
+    lines = ["Paints (id: name):", *[f"- {p.id}: {p.name}" for p in req.palette], ""]
+    lines.append("The painter has white to lighten with." if req.can_lighten else "The painter has no white, so use lighten 0.")
+    lines += ["", "Numbered shapes in the drawing (number: share of the drawing, position):"]
+    for sh in req.shapes:
+        pos = _relative_position(sh.centroid[0], sh.centroid[1], width, height)
+        lines.append(f"- {sh.number}: {sh.area_pct:.0f}% of the drawing, {pos}")
+    lines += ["", "Choose a paint for every numbered shape."]
+    return "\n".join(lines)
 
 
 def _extract_json(raw: str) -> str:
@@ -177,6 +192,37 @@ class Provider(ABC):
             ]
         self._log("plan", start, attempts, fallback=True, problems=problems, error=error, failed_replies=failed_replies)
         return PlanResponse(**fallback_plan(req).model_dump(), source="fallback")
+
+    async def suggest_colors(self, req: SuggestRequest) -> SuggestResponse:
+        """Suggest one of the painter's paints per numbered shape. On failure the browser
+        uses its own rule-based suggestion (source "fallback", no suggestions)."""
+        start = time.perf_counter()
+        messages = [self._system("suggest.md"), Message("user", build_suggest_prompt(req), req.image_b64 or None)]
+        problems: list[str] = []
+        failed_replies: list[str] = []
+        attempts = 0
+        error: str | None = None
+        for attempts in (1, 2):
+            try:
+                raw = await self.chat(messages, SUGGEST_SCHEMA)
+            except ProviderError as exc:
+                error = str(exc)
+                break
+            try:
+                out = normalize_suggestions(SuggestOutput.model_validate_json(_extract_json(raw)), req)
+                problems = validate_suggestions(out, req)
+            except (ValidationError, json.JSONDecodeError) as exc:
+                problems = [f"the reply was not valid JSON for the schema: {exc}"]
+            if not problems:
+                self._log("suggest", start, attempts, fallback=False)
+                return SuggestResponse(suggestions=out.suggestions, source="gemma")
+            failed_replies.append(raw[:4000])
+            messages += [
+                Message("assistant", raw),
+                Message("user", "Your answer failed validation:\n- " + "\n- ".join(problems) + "\nReturn the full corrected JSON."),
+            ]
+        self._log("suggest", start, attempts, fallback=True, problems=problems, error=error, failed_replies=failed_replies)
+        return SuggestResponse(suggestions=[], source="fallback")
 
     async def ask(self, req: AskRequest) -> str:
         """Answer a mid-session question in under 80 words, with the same content checks."""

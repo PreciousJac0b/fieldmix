@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from .paint_names import foreign_paint_names
-from .schemas import Label, PlanOutput, PlanRequest
+from .schemas import ColorSuggestion, Label, PlanOutput, PlanRequest, SuggestOutput, SuggestRequest
 
 # Mixing ratios or amounts. Recipes come only from the color engine, never from the model.
 RATIO_PATTERN = re.compile(
@@ -75,3 +75,37 @@ def normalize_plan(out: PlanOutput, req: PlanRequest) -> PlanOutput:
         labels=[Label(region_id=r.id, label=labels[r.id]) for r in req.regions],
         steps=steps,
     )
+
+
+def normalize_suggestions(out: SuggestOutput, req: SuggestRequest) -> SuggestOutput:
+    """Fix what doesn't need a retry: a paint given by name instead of id, lightening
+    without a white in the palette, and over-long reasons."""
+    by_name = {p.name.lower(): p.id for p in req.palette}
+    fixed = []
+    for s in out.suggestions:
+        paint_id = s.paint_id if s.paint_id in {p.id for p in req.palette} else by_name.get(s.paint_id.strip().lower(), s.paint_id)
+        reason = " ".join(s.reason.split()[:16])
+        fixed.append(ColorSuggestion(number=s.number, paint_id=paint_id, lighten=s.lighten if req.can_lighten else 0, reason=reason))
+    return SuggestOutput(suggestions=fixed)
+
+
+def validate_suggestions(out: SuggestOutput, req: SuggestRequest) -> list[str]:
+    """Every numbered shape gets exactly one paint from the palette; reasons state no amounts."""
+    errors: list[str] = []
+    numbers = {sh.number for sh in req.shapes}
+    palette_ids = {p.id for p in req.palette}
+    palette_names = [p.name for p in req.palette]
+    seen: set[int] = set()
+    for s in out.suggestions:
+        if s.number not in numbers:
+            errors.append(f"shape {s.number} does not exist; use only the numbers {sorted(numbers)}")
+        elif s.number in seen:
+            errors.append(f"shape {s.number} appears more than once")
+        seen.add(s.number)
+        if s.paint_id not in palette_ids:
+            errors.append(f'shape {s.number}: "{s.paint_id}" is not one of the paint ids {sorted(palette_ids)}')
+        errors += text_problems(s.reason, palette_names, f"reason for shape {s.number}")
+    missing = sorted(numbers - seen)
+    if missing:
+        errors.append(f"shapes {missing} have no color; give every numbered shape exactly one paint")
+    return errors

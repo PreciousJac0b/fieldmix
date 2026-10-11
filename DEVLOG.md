@@ -281,3 +281,30 @@ Tests: web 87/87, server 92/92.
   - cap, face, hair and background colored together look right;
   - "Paint with these colors" with the backend off gave the offline plan ("1 part Cadmium Red Hue" for the cap);
   - no new console errors.
+
+### 2026-10-11 — "Suggest colors" for outline drawings: Gemma picks the paints (user approved, time-boxed)
+
+- **What it does:** in Color it in, **✨ Suggest colors**:
+  1. numbers the 12 largest shapes, each number placed deep inside its shape;
+  2. sends the numbered drawing and the painter's paints to Gemma (`POST /api/suggest-colors`);
+  3. Gemma returns, per shape, one of the painter's paint ids, how much white (0, 1 or 3 parts) and a short reason ("cap: bold red stands out");
+  4. the suggestions arrive as ordinary fills, with the numbers drawn on the canvas and a card listing each choice and its reason;
+  5. Undo removes the whole suggestion in one step, and any shape can be re-tapped.
+- **The core principle still holds:** Gemma only *chooses* paints. Every mix is computed by spectral.js, and reasons go through the same ratio and foreign-paint checks as plans.
+- **Validation:**
+  - every numbered shape gets exactly one paint (no unknown, duplicate or missing numbers);
+  - paints given by name are mapped to ids; lightening is dropped when there's no white; reasons are trimmed;
+  - retry once with the errors, then `source: "fallback"`.
+- **Fallback in the browser** (`ruleBasedSuggestion`, used offline or when Gemma fails):
+  - the largest shape at the edge becomes the background, in a pale cool paint;
+  - other shapes get colored paints that no touching shape uses (touching found by short hops across lines), strongest first.
+  - The card says plainly that the rules can't tell a face from a cap.
+- **Plumbing fix:** the Ollama prompted-JSON fallback had the *plan's* shape hard-coded. It's now generated from whichever schema is sent (`schema_shape`), so new response types work with the Homebrew Ollama too.
+- **Live results** (`gemma4:e4b`, the user's coloring page, 4 runs):
+  - all 4 valid;
+  - the first needed the automatic retry (14.1 s including model warm-up), and the next 3 were valid first time at 3.3–3.6 s;
+  - sensible picks: hair yellow, cap blue or red, hearts deep red, background blue, cap brim lighter yellow;
+  - mistakes: the hand was called "animal" every time, and the face color varied (Raw Sienna, Lemon Yellow, Titanium White).
+  So it's labeled a starting point.
+- **Bug found by the live run:** the rule-based fallback never found the background, because the test image has a frame line and the gap-closing padding keeps every shape off the true edge. "Touches the edge" now allows a margin of max(closeRadius + 4, 3% of the short side); there's a test with a framed drawing.
+- **Tests:** server 101 (+8 suggest: validation, normalization, prompt, retry → fallback, transport error, endpoint; + schema templating); web 126 (+5: numbering, neighbors, rules, framed background, no white).

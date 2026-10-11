@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
@@ -18,14 +19,36 @@ THINK = False
 
 STRUCTURED_UNAVAILABLE = "structured output is unavailable"
 
-# Used when Ollama can't constrain decoding to a schema (seen with Homebrew Ollama 0.40.2:
-# its MLX runner ships without the xgrammar library). Validation + retry still apply.
-JSON_INSTRUCTIONS = (
-    "\n\nRespond with only one JSON object, no markdown fences and no other text, with exactly this shape:\n"
-    '{"labels": [{"region_id": <int>, "label": <string>}], '
-    '"steps": [{"order": <int>, "region_ids": [<int>], "title": <string>, "instruction": <string>, '
-    '"technique_tip": <string>, "est_minutes": <int>}]}'
-)
+def schema_shape(schema: dict[str, Any]) -> str:
+    """A compact JSON template for a pydantic JSON schema, e.g. {"labels": [{"region_id": <int>, ...}]}."""
+    names = {"integer": "int", "string": "string", "number": "number", "boolean": "bool"}
+
+    def walk(node: dict[str, Any]) -> str:
+        if "$ref" in node:
+            return walk(schema["$defs"][node["$ref"].split("/")[-1]])
+        if "anyOf" in node:
+            return walk(next(n for n in node["anyOf"] if n.get("type") != "null"))
+        if "enum" in node:
+            return " | ".join(json.dumps(e) for e in node["enum"])
+        if "const" in node:
+            return json.dumps(node["const"])
+        kind = node.get("type")
+        if kind == "object":
+            return "{" + ", ".join(f'"{k}": {walk(v)}' for k, v in node.get("properties", {}).items()) + "}"
+        if kind == "array":
+            return "[" + walk(node.get("items", {})) + "]"
+        return f"<{names.get(str(kind), kind)}>"
+
+    return walk(schema)
+
+
+def json_instructions(schema: dict[str, Any]) -> str:
+    """Used when Ollama can't constrain decoding to a schema (seen with Homebrew Ollama 0.40.2:
+    its MLX runner ships without the xgrammar library). Validation + retry still apply."""
+    return (
+        "\n\nRespond with only one JSON object, no markdown fences and no other text, with exactly this shape:\n"
+        + schema_shape(schema)
+    )
 
 
 class OllamaProvider(Provider):
@@ -52,7 +75,7 @@ class OllamaProvider(Provider):
                     raise
                 self.structured_output = False
         if schema is not None:
-            messages = [*messages[:-1], Message(messages[-1].role, messages[-1].content + JSON_INSTRUCTIONS, messages[-1].image_b64)]
+            messages = [*messages[:-1], Message(messages[-1].role, messages[-1].content + json_instructions(schema), messages[-1].image_b64)]
         return await self._post(messages, None)
 
     async def _post(self, messages: list[Message], schema: dict[str, Any] | None) -> str:

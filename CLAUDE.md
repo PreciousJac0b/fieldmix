@@ -110,6 +110,8 @@ POST /api/plan
 
 POST /api/ask  body: { question, plan, current_step: int (the step's `order`), image_b64? }  ->  { answer }
 POST /api/tts  body: { text }  ->  audio/wav or audio/mpeg   (503 when no server voice is available; the client then uses speechSynthesis)
+POST /api/suggest-colors  body: { image_b64 (outline drawing with shape numbers drawn on), palette, shapes: [{ number, area_pct, centroid, bbox }], can_lighten }
+  200:  { suggestions: [{ number, paint_id, lighten: 0|1|3, reason }], source: "gemma" | "fallback" }   (fallback = empty; the browser uses its rule-based suggestion)
 ```
 
 The JSON schema sent to the model (Ollama `format`) is generated from a model-output-only pydantic model containing `labels` and `steps`. `source` is set by the server and is never part of the model's schema.
@@ -294,6 +296,7 @@ Only start a stretch goal once Phase 6 is done. Each is self-contained, so Claud
 
 ## Spec changelog
 
+- **2026-10-11:** "Color it in" for outline canvases, with painter-drawn outlines and "Suggest colors": Gemma picks one of the painter's paints (+ how much white) per numbered shape; code still does every mix. New endpoint `/api/suggest-colors`; the Ollama prompted-JSON hint is now generated from each response schema.
 - **2026-10-11:** Simpler recipes (user-approved): simplest within ΔE 2 of the most accurate, capped at quality-label boundaries; shortlists kept per recipe size so simple mixes aren't crowded out.
 - **2026-10-11:** Phase 2 findings: Ollama `format` unavailable on the Homebrew build (prompted-JSON fallback added); `think: false` adopted after measuring 17.9 s vs 6.2 s median plan latency; log module named `calllog.py` (not `logging.py`, which would read like the stdlib module); `eval.py` and `make_plan_request.ts` built early for the Phase 2 live run.
 - **2026-10-10:** Integrated review fixes: Gemma never states ratios (template-inserted recipes plus a ratio check); single Render web service; eval split into `eval.ts` + `eval.py`; fallback planner parity fixture; 512 px / 768 px image split; Android Chrome secure-context handling (flag + video wake-lock fallback, no mkcert); audio unlock gesture; Vite `/api` proxy and FastAPI serving `web/dist` from Phase 3; recipe search limits, GCD dedupe, and hue-bracket pruning; test-dab may use any palette paint and has a "no single-part fix" outcome; chroma threshold and lighten-without-white rule; linear-light white balance; model-output-only schema and `current_step` as int; Gemini capability check; unverified model sizes flagged; preset and eval palettes defined; repo layout completed; synthetic-image test at k = 6; Phase 3 "backend stopped" defined; hand-written rate limiter with `X-Forwarded-For`; Piper voice license check; file renamed to `CLAUDE.md`. Added context (Android, Python 3.12, GitHub repo name) and the Week 1 deadline plan.

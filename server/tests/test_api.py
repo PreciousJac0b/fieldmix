@@ -11,7 +11,8 @@ from fastapi.testclient import TestClient
 
 from app import main
 from app.providers.base import Message, ProviderError
-from app.providers.ollama import OllamaProvider
+from app.providers.ollama import OllamaProvider, schema_shape
+from app.schemas import PlanOutput, SuggestOutput
 
 from .conftest import FakeProvider, good_plan_json
 
@@ -94,14 +95,14 @@ def test_ollama_falls_back_to_prompted_json_when_structured_output_is_unavailabl
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     provider = OllamaProvider("http://ollama.test", "gemma4:e4b", client=client)
     msgs = [Message("system", "sys"), Message("user", "plan this", "aW1n")]
-    assert asyncio.run(provider.chat(msgs, {"type": "object"})) == "{}"
+    assert asyncio.run(provider.chat(msgs, PlanOutput.model_json_schema())) == "{}"
     assert provider.structured_output is False
     assert "format" not in bodies[1]
     assert bodies[1]["messages"][1]["content"].startswith("plan this")
     assert '"region_ids"' in bodies[1]["messages"][1]["content"]
     assert bodies[1]["messages"][1]["images"] == ["aW1n"]
     # Remembered: the next schema call skips straight to prompted JSON.
-    asyncio.run(provider.chat(msgs, {"type": "object"}))
+    asyncio.run(provider.chat(msgs, PlanOutput.model_json_schema()))
     assert len(bodies) == 3 and "format" not in bodies[2]
 
 
@@ -114,3 +115,10 @@ def test_ollama_other_errors_are_not_masked() -> None:
     with pytest.raises(ProviderError, match="not found"):
         asyncio.run(provider.chat([Message("user", "hi")], {"type": "object"}))
     assert provider.structured_output is None
+
+
+def test_schema_shape_templates_any_response_model() -> None:
+    assert schema_shape(SuggestOutput.model_json_schema()) == (
+        '{"suggestions": [{"number": <int>, "paint_id": <string>, "lighten": 0 | 1 | 3, "reason": <string>}]}'
+    )
+    assert '"region_ids": [<int>]' in schema_shape(PlanOutput.model_json_schema())

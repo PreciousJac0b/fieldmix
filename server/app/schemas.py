@@ -85,3 +85,38 @@ class AskRequest(BaseModel):
 
 class AskResponse(BaseModel):
     answer: str
+
+
+class SuggestShape(BaseModel):
+    """One numbered shape of an outline drawing (numbers are drawn on the image)."""
+
+    number: int
+    area_pct: float
+    centroid: tuple[float, float]
+    bbox: tuple[float, float, float, float]
+
+
+class SuggestRequest(BaseModel):
+    image_b64: str = ""
+    palette: list[PaletteItem] = Field(min_length=1)
+    shapes: list[SuggestShape] = Field(min_length=1, max_length=20)
+    #: Whether the palette has a white to lighten with (otherwise lighten must be 0).
+    can_lighten: bool = True
+
+
+class ColorSuggestion(BaseModel):
+    number: int
+    paint_id: str
+    #: Parts of white per part of paint: 0 (as is), 1 (lighter), 3 (pale).
+    lighten: Literal[0, 1, 3] = 0
+    reason: str
+
+
+class SuggestOutput(BaseModel):
+    """What the model must return."""
+
+    suggestions: list[ColorSuggestion]
+
+
+class SuggestResponse(SuggestOutput):
+    source: Literal["gemma", "fallback"]

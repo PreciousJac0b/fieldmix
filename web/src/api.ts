@@ -119,3 +119,20 @@ export async function ask(question: string, plan: PlanResponse, currentStep: num
   )
   return res.answer
 }
+
+export interface SuggestRequest {
+  image_b64: string
+  palette: { id: string; name: string; hex: string }[]
+  shapes: { number: number; area_pct: number; centroid: [number, number]; bbox: [number, number, number, number] }[]
+  can_lighten: boolean
+}
+
+export interface SuggestResponse {
+  suggestions: { number: number; paint_id: string; lighten: 0 | 1 | 3; reason: string }[]
+  source: 'gemma' | 'fallback'
+}
+
+/** POST /api/suggest-colors: Gemma picks one of the painter's paints per numbered shape. */
+export function suggestColors(req: SuggestRequest): Promise<SuggestResponse> {
+  return call<SuggestResponse>('/api/suggest-colors', json(req), 120_000)
+}
