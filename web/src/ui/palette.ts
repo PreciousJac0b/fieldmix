@@ -10,7 +10,7 @@ import { PRESET_PAINTS, STUDENT_SET, TITANIUM_WHITE, type Paint } from '../color
 import { applyWhiteBalance, sampleMedian, whiteBalanceGains } from '../color/swatches.ts'
 import type { Session } from '../session.ts'
 import { deletePalette, listPalettes, savePalette } from '../store.ts'
-import { loadPhoto } from './capture.ts'
+import { canOpenCamera, loadPhoto } from './capture.ts'
 import { chip, h } from './dom.ts'
 
 const LAST_KEY = 'fieldmix.lastPalette'
@@ -199,7 +199,7 @@ function scanPanel(s: Session, refresh: () => void): HTMLElement {
     datalist,
     input,
     status,
-    h('button', { type: 'button', class: 'primary big full', onclick: () => input.click() }, 'Photograph swatch card'),
+    h('button', { type: 'button', class: 'primary big full', onclick: () => input.click() }, canOpenCamera() ? 'Photograph swatch card' : 'Choose swatch card photo'),
     stage,
     list,
     h('p', { class: 'muted' }, 'Scanned paints are added to any ticked presets. Untick presets you did not scan.'),

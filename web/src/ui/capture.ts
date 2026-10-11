@@ -17,6 +17,15 @@ export async function loadPhoto(file: Blob): Promise<Photo> {
   return { canvas, pixels: canvasPixels(canvas), jpeg768: canvasToJpegBase64(big, 0.8) }
 }
 
+/**
+ * Whether the file input's `capture` attribute will open a camera. Phone and tablet
+ * browsers honor it; desktop browsers ignore it and show a file picker. A touch-first
+ * device (coarse primary pointer) is the practical signal.
+ */
+export function canOpenCamera(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+}
+
 export function renderCapture(s: Session, onNext: () => void, onBack: () => void): HTMLElement {
   const preview = h('div', { class: 'stage' })
   const next = h('button', { type: 'button', class: 'primary big full', disabled: !s.photo, onclick: onNext }, 'Next: your paints')
@@ -62,7 +71,14 @@ export function renderCapture(s: Session, onNext: () => void, onBack: () => void
     h('p', {}, hint),
     input,
     fromLibrary,
-    h('div', { class: 'row' }, h('button', { type: 'button', class: 'primary big', onclick: () => input.click() }, 'Take photo'), h('button', { type: 'button', class: 'big', onclick: () => fromLibrary.click() }, 'Choose from gallery')),
+    canOpenCamera()
+      ? h('div', { class: 'row' }, h('button', { type: 'button', class: 'primary big', onclick: () => input.click() }, 'Take photo'), h('button', { type: 'button', class: 'big', onclick: () => fromLibrary.click() }, 'Choose from gallery'))
+      : h(
+          'div',
+          {},
+          h('button', { type: 'button', class: 'primary big', onclick: () => fromLibrary.click() }, 'Choose a photo'),
+          h('p', { class: 'muted' }, 'On a laptop the browser opens a file picker. Open Fieldmix on your phone to take the photo with its camera.'),
+        ),
     status,
     preview,
     h('div', { class: 'row', style: 'margin-top:16px' }, h('button', { type: 'button', onclick: onBack }, 'Back'), h('span', { class: 'spacer' })),

@@ -171,3 +171,10 @@ Tests: web 87/87, server 92/92.
 - **The same speaker handles everything spoken:** steps, test-dab messages and Ask answers can all be paused.
 - **Tests:** 9 unit tests with a fake speech engine (sentence splitting; pause/resume mid-sentence; nothing skipped; toggle; new text while paused; stop; pause during the last sentence). Web tests now 96/96.
 - **Checked in Chrome with the real engine:** Pause → the engine goes silent and stays silent; Resume → speaking again; Next or Back while paused starts the new step fresh; after speech finishes the button shows Play, and tapping it speaks again.
+
+### 2026-10-11 — Photo buttons on a laptop (user report)
+
+- **Report:** on the laptop, "Take photo" and "Choose from gallery" both opened a file picker.
+- **Cause:** desktop browsers ignore the file input's `capture` attribute, so this is expected. On Android Chrome, "Take photo" opens the rear camera directly. The spec rules out `getUserMedia`, because it needs a secure context, which the phone doesn't have over http on Wi-Fi.
+- **Fix:** the screen now adapts. On a touch-first device (`pointer: coarse`) it shows "Take photo" + "Choose from gallery". Otherwise it shows a single "Choose a photo" button, with a note that the camera opens when Fieldmix is opened on a phone. The swatch-card button's label adapts the same way.
+- **Checked:** both layouts in Chrome (desktop, and Android emulation with touch).
