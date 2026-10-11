@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { kmeans, mulberry32 } from '../src/color/kmeans.ts'
 import { deltaE2000, rgb8ToLab } from '../src/color/lab.ts'
-import { extractRegions, outlineMask } from '../src/color/regions.ts'
+import { extractRegions, labelSpacing, neutralShare, outlineMask, placeLabels, regionDistance } from '../src/color/regions.ts'
 import { makeImage, noise } from './helpers.ts'
 
 describe('mulberry32', () => {
@@ -103,5 +103,69 @@ describe('extractRegions', () => {
   it('outline mask marks only boundaries', () => {
     const labels = new Uint8Array([0, 0, 1, 0, 0, 1, 0, 0, 1])
     expect(Array.from(outlineMask(labels, 3, 3))).toEqual([0, 1, 0, 0, 1, 0, 0, 1, 0])
+  })
+})
+
+describe('label placement', () => {
+  it('chamfer distance grows toward the middle of a region', () => {
+    const labels = new Uint8Array(7 * 7) // one region filling a 7 × 7 image
+    const d = regionDistance(labels, 7, 7, 0)
+    expect(d[0]).toBe(3) // corner touches the border
+    expect(d[3 * 7 + 3]).toBe(12) // center is 4 steps in
+    expect(Math.max(...d)).toBe(d[3 * 7 + 3])
+  })
+
+  it('puts the number deep inside the region, not at the centroid of scattered pixels', () => {
+    // Background (region 0) with two 30 × 30 squares of region 1 at the left and right edges.
+    const w = 200
+    const h = 100
+    const lm = new Uint8Array(w * h)
+    for (let y = 35; y < 65; y++) for (let x = 0; x < 30; x++) lm[y * w + x] = 1
+    for (let y = 35; y < 65; y++) for (let x = 170; x < 200; x++) lm[y * w + x] = 1
+    const [, p1] = placeLabels(lm, w, h, [100, 100], [50, 50])
+    // Old rule would pick a square edge nearest (100, 50); now it's well inside a square.
+    expect(lm[p1[1] * w + p1[0]]).toBe(1)
+    const insideLeft = p1[0] >= 10 && p1[0] <= 20
+    const insideRight = p1[0] >= 180 && p1[0] <= 190
+    expect(insideLeft || insideRight).toBe(true)
+    expect(p1[1]).toBeGreaterThanOrEqual(45)
+    expect(p1[1]).toBeLessThanOrEqual(55)
+  })
+
+  it('keeps numbers apart on line art, where every region spans the whole picture', () => {
+    // White page with concentric black and grey rings (outline drawing + anti-aliasing).
+    const img = makeImage(240, 300, (x, y) => {
+      const r = Math.hypot(x - 120, y - 150)
+      const ring = r % 24
+      if (ring < 2) return [20, 20, 20]
+      if (ring < 3) return [90, 90, 90]
+      if (ring < 4) return [180, 180, 180]
+      return [252, 252, 252]
+    })
+    const { regions } = extractRegions(img, { k: 6, seed: 1 })
+    expect(regions.length).toBeGreaterThanOrEqual(3)
+    const sep = labelSpacing(240, 300)
+    for (let a = 0; a < regions.length; a++) {
+      for (let b = a + 1; b < regions.length; b++) {
+        const [ax, ay] = regions[a].label_point
+        const [bx, by] = regions[b].label_point
+        expect(Math.hypot(ax - bx, ay - by)).toBeGreaterThanOrEqual(sep)
+      }
+    }
+  })
+
+  it('every label sits on a pixel of its own region', () => {
+    const img = makeImage(120, 90, (x, y) => (y < 30 ? [80, 140, 220] : x < 60 ? [60, 150, 60] : [200, 170, 120]))
+    const { regions, labelMap } = extractRegions(img, { k: 6, seed: 1 })
+    regions.forEach((r, idx) => expect(labelMap[r.label_point[1] * 120 + r.label_point[0]]).toBe(idx))
+  })
+})
+
+describe('neutralShare (line-art detection)', () => {
+  it('is near 1 for black/white/grey pictures and low for colorful ones', () => {
+    const lineArt = makeImage(100, 100, (x) => (x % 10 < 2 ? [15, 15, 15] : [250, 250, 250]))
+    expect(neutralShare(extractRegions(lineArt, { k: 6, seed: 1 }).regions)).toBeGreaterThan(0.99)
+    const scene = makeImage(100, 100, (_x, y) => (y < 50 ? [90, 150, 230] : [70, 140, 60]))
+    expect(neutralShare(extractRegions(scene, { k: 6, seed: 1 }).regions)).toBeLessThan(0.01)
   })
 })

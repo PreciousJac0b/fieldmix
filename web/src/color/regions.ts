@@ -156,17 +156,9 @@ export function extractRegions(img: PixelImage, opts: RegionOptions = {}): Regio
     if (y > maxY[r]) maxY[r] = y
   }
 
-  // Label anchor: the member pixel nearest the centroid.
   const cx = Array.from({ length: R }, (_, r) => sumXY[r * 2] / count[r])
   const cy = Array.from({ length: R }, (_, r) => sumXY[r * 2 + 1] / count[r])
-  const anchor = Array.from({ length: R }, () => ({ d: Infinity, x: 0, y: 0 }))
-  for (let i = 0; i < n; i++) {
-    const r = labelMap[i]
-    const x = i % width
-    const y = (i - x) / width
-    const d = (x - cx[r]) ** 2 + (y - cy[r]) ** 2
-    if (d < anchor[r].d) anchor[r] = { d, x, y }
-  }
+  const anchor = placeLabels(labelMap, width, height, cx, cy)
 
   const regions: Region[] = clusters.map((_, r) => {
     const meanLab: Lab = [sumLab[r * 3] / count[r], sumLab[r * 3 + 1] / count[r], sumLab[r * 3 + 2] / count[r]]
@@ -177,11 +169,85 @@ export function extractRegions(img: PixelImage, opts: RegionOptions = {}): Regio
       area_pct: Math.round((count[r] / n) * 1000) / 10,
       centroid: [Math.round(cx[r]), Math.round(cy[r])],
       bbox: [minX[r], minY[r], maxX[r] - minX[r] + 1, maxY[r] - minY[r] + 1],
-      label_point: [anchor[r].x, anchor[r].y],
+      label_point: anchor[r],
     }
   })
 
   return { regions, labelMap, width, height }
+}
+
+/**
+ * Chamfer (3-4) distance from each pixel of region `r` to the nearest pixel outside it
+ * (the image border counts as outside). Non-members get 0. Units: 3 ≈ one pixel.
+ */
+export function regionDistance(labelMap: Uint8Array, width: number, height: number, r: number): Uint32Array {
+  const d = new Uint32Array(width * height)
+  const BIG = 1 << 30
+  for (let i = 0; i < d.length; i++) d[i] = labelMap[i] === r ? BIG : 0
+  const at = (x: number, y: number) => (x < 0 || y < 0 || x >= width || y >= height ? 0 : d[y * width + x])
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x
+      if (!d[i]) continue
+      d[i] = Math.min(d[i], at(x - 1, y) + 3, at(x, y - 1) + 3, at(x - 1, y - 1) + 4, at(x + 1, y - 1) + 4)
+    }
+  }
+  for (let y = height - 1; y >= 0; y--) {
+    for (let x = width - 1; x >= 0; x--) {
+      const i = y * width + x
+      if (!d[i]) continue
+      d[i] = Math.min(d[i], at(x + 1, y) + 3, at(x, y + 1) + 3, at(x + 1, y + 1) + 4, at(x - 1, y + 1) + 4)
+    }
+  }
+  return d
+}
+
+/** Minimum spacing between region numbers, in image pixels. */
+export function labelSpacing(width: number, height: number): number {
+  return Math.max(24, Math.round(0.08 * Math.min(width, height)))
+}
+
+/**
+ * Where to draw each region's number: the pixel deepest inside the region (farthest
+ * from its edges), ties broken toward the region's centroid, and at least
+ * `labelSpacing` away from numbers already placed. Regions are placed in order
+ * (largest first), so big regions get their best spot. If a region has no pixel far
+ * enough from the others (tiny, crowded regions), it takes its deepest pixel anyway.
+ *
+ * The old rule (member pixel nearest the centroid) stacked every number in the middle
+ * of line art, where each region is spread across the whole picture.
+ */
+export function placeLabels(labelMap: Uint8Array, width: number, height: number, cx: number[], cy: number[]): [number, number][] {
+  const minSep = labelSpacing(width, height)
+  const placed: [number, number][] = []
+  for (let r = 0; r < cx.length; r++) {
+    const dist = regionDistance(labelMap, width, height, r)
+    let best = -1
+    let bestD = -1
+    let bestC = Infinity
+    let fallback = -1
+    let fallbackD = -1
+    for (let i = 0; i < dist.length; i++) {
+      const dv = dist[i]
+      if (!dv) continue
+      const x = i % width
+      const y = (i - x) / width
+      const c = (x - cx[r]) ** 2 + (y - cy[r]) ** 2
+      if (dv > fallbackD) {
+        fallbackD = dv
+        fallback = i
+      }
+      if (dv < bestD || (dv === bestD && c >= bestC)) continue
+      if (placed.some(([px, py]) => (px - x) ** 2 + (py - y) ** 2 < minSep * minSep)) continue
+      best = i
+      bestD = dv
+      bestC = c
+    }
+    const i = best >= 0 ? best : fallback
+    const x = i % width
+    placed.push([x, (i - x) / width])
+  }
+  return placed
 }
 
 /** Boolean mask of region boundaries (a pixel whose right or lower neighbor is in another region). */
@@ -225,4 +291,18 @@ export function drawOverlay(ctx: CanvasRenderingContext2D, result: RegionResult,
     ctx.fillText(String(r.id), x * scale, y * scale)
   }
   ctx.restore()
+}
+
+/** Below this chroma a region counts as black, white or grey. */
+export const NEUTRAL_CHROMA = 10
+
+/**
+ * Share of the picture (0 to 1) covered by neutral regions. A value near 1 means the
+ * image is black/white/grey, typically an outline drawing or a blank sip-and-paint
+ * canvas, so there are no colors to mix.
+ */
+export function neutralShare(regions: Region[]): number {
+  const neutral = regions.filter((r) => Math.hypot(r.lab[1], r.lab[2]) < NEUTRAL_CHROMA).reduce((s, r) => s + r.area_pct, 0)
+  const total = regions.reduce((s, r) => s + r.area_pct, 0) || 1
+  return neutral / total
 }

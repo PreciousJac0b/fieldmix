@@ -6,7 +6,7 @@
 
 import { adjustmentTips, eyedropper } from '../color/adjust.ts'
 import type { Recipe } from '../color/recipes.ts'
-import { drawOverlay, extractRegions } from '../color/regions.ts'
+import { drawOverlay, extractRegions, neutralShare } from '../color/regions.ts'
 import { solveInWorker } from '../color/solver.ts'
 import { quality, recipeDots, recipeText, regionLabel, type Session } from '../session.ts'
 import { chip, h } from './dom.ts'
@@ -95,7 +95,10 @@ function attachLongPress(s: Session, canvas: HTMLCanvasElement, host: HTMLElemen
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) canvas.addEventListener(ev, cancel)
 }
 
-export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack: () => void): HTMLElement {
+/** Share of neutral (black/white/grey) area above which the photo is treated as line art. */
+const LINE_ART_SHARE = 0.9
+
+export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack: () => void, onRetake: () => void = onBack): HTMLElement {
   const root = h('div')
   const photo = s.photo!
   const regions = s.regions!
@@ -121,8 +124,18 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
   })
 
   const closest = s.recipes.filter((r) => r.closest_possible).length
+  const lineArt = neutralShare(regions.regions) >= LINE_ART_SHARE
   root.append(
     h('h1', {}, 'Your color map'),
+    lineArt
+      ? h(
+          'div',
+          { class: 'card', role: 'note' },
+          h('strong', {}, 'This picture is almost all black, white and grey.'),
+          h('p', {}, 'It looks like an outline drawing or a blank canvas, so there are no colors to mix yet. At a paint-and-sip event, photograph the host\'s finished sample painting instead.'),
+          h('button', { type: 'button', onclick: onRetake }, 'Take a different photo'),
+        )
+      : '',
     h('p', { class: 'muted' }, 'Each number is one color to mix. Long-press anywhere on the picture to get a mix for that exact spot.'),
     h('div', { class: 'stage' }, base, overlay),
     closest ? h('p', {}, `${closest} region${closest > 1 ? 's are' : ' is'} hard to match with these paints, so ${closest > 1 ? 'they are' : 'it is'} marked "Closest possible".`) : '',

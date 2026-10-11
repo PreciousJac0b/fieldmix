@@ -50,7 +50,7 @@ async function goMap(): Promise<void> {
 }
 
 function showMap(): void {
-  mount(renderRegionMap(s, makePlan, goPalette))
+  mount(renderRegionMap(s, makePlan, goPalette, goCapture))
 }
 
 async function makePlan(): Promise<void> {
