@@ -6,7 +6,7 @@
 
 import { adjustmentTips, eyedropper } from '../color/adjust.ts'
 import type { Recipe } from '../color/recipes.ts'
-import { drawOverlay, extractRegions, neutralShare } from '../color/regions.ts'
+import { drawOverlay, extractRegions, isLineArt } from '../color/regions.ts'
 import { solveInWorker } from '../color/solver.ts'
 import { quality, recipeDots, recipeText, regionLabel, type Session } from '../session.ts'
 import { renderCompare } from './compare.ts'
@@ -96,9 +96,6 @@ function attachLongPress(s: Session, canvas: HTMLCanvasElement, host: HTMLElemen
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) canvas.addEventListener(ev, cancel)
 }
 
-/** Share of neutral (black/white/grey) area above which the photo is treated as line art. */
-const LINE_ART_SHARE = 0.9
-
 export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack: () => void, onRetake: () => void = onBack): HTMLElement {
   const root = h('div')
   const photo = s.photo!
@@ -125,7 +122,7 @@ export function renderRegionMap(s: Session, onPlan: () => Promise<void>, onBack:
   })
 
   const closest = s.recipes.filter((r) => r.closest_possible).length
-  const lineArt = neutralShare(regions.regions) >= LINE_ART_SHARE
+  const lineArt = isLineArt(regions.regions)
 
   const mapPanel = h(
     'div',

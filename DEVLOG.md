@@ -203,3 +203,10 @@ Tests: web 87/87, server 92/92.
   - the tab builds in 15 ms and shows "Good, average ΔE 0.6";
   - dragging moves the divider, and moving after letting go doesn't;
   - Photo and Painting jump to each end (the center pixel switches between the photo and the mix color).
+
+### 2026-10-11 — Before / after on line art showed a "cream layer" (user report)
+
+- **Report:** on an outline drawing, the "painting" side added no color, just a yellowish layer.
+- **Diagnosis** (measured on the user's image): it is 100% neutral, with all 5 regions at chroma 0. The page (92% of the picture) correctly matches 1 part Titanium White, whose preset `#f4f3ee` (Lab 95.8, −0.5, 2.5) is a warm off-white; that's the cream tint. The lines get grey mixes. So the preview faithfully reproduced a photo with no colors in it. By design, Fieldmix never invents colors.
+- **Fix:** when the photo is line art (`isLineArt`, now shared by both tabs), Before / after starts with a note explaining that there are no colors to preview, why the page looks cream, and that for a sip-and-paint outline canvas you should photograph the host's finished sample painting.
+- **Possible next feature, not built:** "Color it in" for outline canvases. Tap a shape, choose one of your paints or mixes, and the preview fills it.

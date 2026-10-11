@@ -306,3 +306,11 @@ export function neutralShare(regions: Region[]): number {
   const total = regions.reduce((s, r) => s + r.area_pct, 0) || 1
   return neutral / total
 }
+
+/** Share of neutral area above which a photo is treated as line art (outline drawing or blank canvas). */
+export const LINE_ART_SHARE = 0.9
+
+/** True when the picture is (almost) all black, white and grey, so there are no colors to mix. */
+export function isLineArt(regions: Region[]): boolean {
+  return neutralShare(regions) >= LINE_ART_SHARE
+}

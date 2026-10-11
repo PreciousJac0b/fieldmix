@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { kmeans, mulberry32 } from '../src/color/kmeans.ts'
 import { deltaE2000, rgb8ToLab } from '../src/color/lab.ts'
-import { extractRegions, labelSpacing, neutralShare, outlineMask, placeLabels, regionDistance } from '../src/color/regions.ts'
+import { extractRegions, isLineArt, labelSpacing, neutralShare, outlineMask, placeLabels, regionDistance } from '../src/color/regions.ts'
 import { makeImage, noise } from './helpers.ts'
 
 describe('mulberry32', () => {
@@ -167,5 +167,7 @@ describe('neutralShare (line-art detection)', () => {
     expect(neutralShare(extractRegions(lineArt, { k: 6, seed: 1 }).regions)).toBeGreaterThan(0.99)
     const scene = makeImage(100, 100, (_x, y) => (y < 50 ? [90, 150, 230] : [70, 140, 60]))
     expect(neutralShare(extractRegions(scene, { k: 6, seed: 1 }).regions)).toBeLessThan(0.01)
+    expect(isLineArt(extractRegions(lineArt, { k: 6, seed: 1 }).regions)).toBe(true)
+    expect(isLineArt(extractRegions(scene, { k: 6, seed: 1 }).regions)).toBe(false)
   })
 })

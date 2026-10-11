@@ -7,6 +7,7 @@
 import { deltaE2000 } from '../color/lab.ts'
 import { mixPaints } from '../color/mix.ts'
 import { areaWeightedDeltaE, hexToRgb8, modeFilter, paintPreview } from '../color/preview.ts'
+import { isLineArt } from '../color/regions.ts'
 import { quality, type Session } from '../session.ts'
 import { h } from './dom.ts'
 
@@ -97,9 +98,23 @@ export function renderCompare(s: Session): HTMLElement {
   const used = [...new Set([...s.working.values()].flat().map((p) => p.paint_id))]
   const names = used.map((id) => s.palette.find((p) => p.id === id)?.name ?? id)
 
+  const white = s.palette.find((p) => p.id === 'titanium-white')?.name ?? 'your white'
+  const lineArtNote = isLineArt(s.regions!.regions)
+    ? h(
+        'div',
+        { class: 'card', role: 'note' },
+        h('strong', {}, 'No colors to preview in this picture.'),
+        h(
+          'p',
+          {},
+          `It is all black, white and grey, so the "painting" is just ${white} for the page and grey mixes for the lines (white paint is a little warmer than a screen's white, hence the cream tint). Fieldmix takes every color from the photo and never invents one. For a sip-and-paint outline canvas, photograph the host's finished sample painting to see a colored preview.`,
+        ),
+      )
+    : ''
   return h(
     'div',
     {},
+    lineArtNote,
     h('p', { class: 'muted' }, 'Left: your photo. Right: what the finished painting could look like if you follow the plan with these paints. Drag across the picture to compare.'),
     h('div', { class: 'stage' }, view),
     slider,
